@@ -99,3 +99,9 @@
 - Access checks use fictional data to verify privacy, fingerprint lookup, malformed links, server failures and prevention of accidental link rotation. All existing backend checks and TypeScript pass. Design detector findings only flag the font and palette explicitly required by DESIGN.md.
 - Development preview: https://neat-hyena-46.convex.site. No production deployment, GitHub push, AI call, search or WhatsApp action for this milestone.
 - Next: owner checks the two personal links on a phone before production shipping. Existing owner edits in AGENTS.md and PRODUCT.md remain outside this change.
+
+## Milestone 3 - owner approved shipping
+
+- Owner confirmed both personal links work on a phone and authorised commit, push and deploy.
+- Shipping includes the two founder rows in production with their existing link fingerprints, so the same codes work on the production address. No operators or AI actions are included.
+
