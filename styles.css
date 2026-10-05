@@ -1,0 +1,79 @@
+@font-face {
+  font-family: Inter;
+  src: url('/fonts/inter-regular.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: Inter;
+  src: url('/fonts/inter-semibold.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 600 900;
+  font-display: swap;
+}
+:root {
+  font-family: Inter, sans-serif;
+  font-size: 16px;
+  color: #26231f;
+  background: #f5f2ec;
+  --brown: #493426;
+  --line: #d9d1c6;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+main {
+  display: grid;
+  justify-items: center;
+  padding: 32px 24px;
+}
+.panel {
+  width: min(100%, 680px);
+  padding: 40px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #faf8f4;
+}
+[hidden] { display: none !important; }
+h1 { font-size: 20px; line-height: 1.4; font-weight: 650; margin: 0 0 16px; text-wrap: balance; }
+p { line-height: 1.6; margin: 0 0 32px; max-width: 65ch; }
+button, textarea { font: inherit; }
+button { min-height: 48px; cursor: pointer; }
+.primary {
+  padding: 14px 24px;
+  border: 0;
+  border-radius: 28px;
+  background: var(--brown);
+  color: #faf8f4;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.primary:hover:not(:disabled) { filter: brightness(1.15); }
+.primary:disabled { background: var(--line); color: #514a43; cursor: not-allowed; }
+:focus-visible { outline: 2px solid #26231f; outline-offset: 4px; }
+.back { background: transparent; color: inherit; border: 0; padding: 0; margin: 0 0 24px; text-decoration: underline; text-underline-offset: 4px; }
+label { display: block; line-height: 1.6; margin-bottom: 16px; }
+textarea {
+  display: block;
+  width: 100%;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  color: inherit;
+  background: #f5f2ec;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 240px;
+  caret-color: var(--brown);
+}
+textarea::placeholder { color: #655d54; opacity: 1; }
+.search-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; }
+.search-actions p { margin: 0; }
+::selection { background: #d9d1c6; color: #26231f; }
+@media (max-width: 600px) {
+  main { min-height: 100svh; align-items: end; padding: 24px 16px; }
+  .panel { padding: 24px; }
+  #landing .primary { width: 100%; }
+  .search-actions { flex-direction: column; align-items: stretch; }
+  textarea { padding: 16px; }
+}

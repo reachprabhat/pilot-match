@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#493426" />
+    <meta name="description" content="Connects best operators to startup founders with new innovative solutions" />
+    <title>Meet the best operators</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <section id="landing" class="panel" aria-labelledby="landing-title">
+        <h1 id="landing-title">Meet the best operators</h1>
+        <p>Connects best operators to startup founders with new innovative solutions</p>
+        <button id="open-ask" class="primary" type="button">Founder, enter your requirements</button>
+      </section>
+      <section id="ask" class="panel" aria-labelledby="ask-title" hidden>
+        <button id="back" class="back" type="button">Back to landing page</button>
+        <h1 id="ask-title" tabindex="-1">Enter your pilot ask</h1>
+        <label for="pilot-ask">What would you like to pilot, and with which companies?</label>
+        <textarea id="pilot-ask" rows="7" autocomplete="off" aria-describedby="matching-note" placeholder="For example: We have an AI-enabled supply chain &amp; manufacturing decision intelligence tool that identifies supply chain/production bottlenecks across industries. Looking for a 6–8 week pilot with ₹100 Cr+ companies, ideally contract manufacturers, retail or industrial products."></textarea>
+        <div class="search-actions">
+          <p id="matching-note">Matching opens soon</p>
+          <button class="primary" type="button" disabled aria-describedby="matching-note">Search</button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
