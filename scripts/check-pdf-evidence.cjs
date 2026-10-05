@@ -1,0 +1,25 @@
+const fs=require('node:fs');
+const assert=require('node:assert/strict');
+const esbuild=require('esbuild');
+const vm=require('node:vm');
+(async()=>{
+const objects=['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>','<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'];
+const text='BT /F1 12 Tf 72 720 Td (Annual revenue was USD 10 million in 2025.) Tj ET';
+objects.push('<< /Length '+text.length+' >>\nstream\n'+text+'\nendstream');
+let pdf='%PDF-1.4\n';const offsets=[0];
+objects.forEach((o,i)=>{offsets.push(Buffer.byteLength(pdf));pdf+=(i+1)+' 0 obj\n'+o+'\nendobj\n';});
+const xref=Buffer.byteLength(pdf);pdf+='xref\n0 6\n0000000000 65535 f \n'+offsets.slice(1).map(n=>String(n).padStart(10,'0')+' 00000 n \n').join('')+'trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF';
+const built=esbuild.buildSync({entryPoints:['convex/lib/evidenceSource.ts'],bundle:true,platform:'node',format:'cjs',write:false,external:['pdf-parse','pdf-parse/worker']});
+const ctx={module:{exports:{}},require,Buffer,URL,AbortSignal,fetch:async()=>new Response(Buffer.from(pdf),{headers:{'content-type':'application/pdf'}})};
+vm.runInNewContext(built.outputFiles[0].text,ctx);
+const result=await ctx.module.exports.readEvidenceSource('https://example.com/annual-report.pdf');
+assert.ok(result.includes('annual revenue was usd 10 million in 2025.'));
+const helper={module:{exports:{}},URL};
+vm.runInNewContext(esbuild.transformSync(fs.readFileSync('convex/lib/enrichment.ts','utf8'),{loader:'ts',format:'cjs'}).code,helper);
+const url='https://example.com/annual-report.pdf';
+const fact={value:'USD 10 million',sourceUrl:url,evidence:'Annual revenue was USD 10 million in 2025.'};
+const pages=new Map([[url,result]]);const known=new Set([url]);
+assert.equal(helper.module.exports.validateFacts({revenueBand:fact},known,pages).revenueBand.value,'USD 10 million');
+assert.equal(helper.module.exports.validateFacts({revenueBand:{...fact,value:'USD 50 million'}},known,pages).revenueBand.value,'not found');
+console.log('PDF evidence check passed with a generated fictional annual report.');
+})().catch(e=>{console.error(e);process.exitCode=1});

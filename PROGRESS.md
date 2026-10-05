@@ -31,3 +31,52 @@
 - Repaired the replacement character (U+FFFD) in operator 5's currentRole and headline to a plain dash in Convex dev. Database verification confirms both dashes and all ten rows remain. A saved check uses made-up text to verify replacement, preservation and repeat runs.
 - Real operator data remains only in dev; deploying code does not copy dev rows to production. The original source CSV remains unchanged.
 - Next: milestone 2, company-detail enrichment.
+
+## Milestone 2 — operator 1 trial checked in dev; awaiting owner review
+
+- Owner approved building the action and running operator 1 only. Operators 2–10 must remain untouched until further instruction.
+- Added internal operatorEnrichment:run action using the Responses API, gpt-6-luna, low reasoning, 1200 output tokens, one required web_search tool call, and OPENAI_API_KEY from Convex environment variables. Only stored company text goes to OpenAI; no operator name, phone or personal profile is sent. Provider response storage is disabled.
+- An atomic reservation records the attempt before the external call and prevents duplicate/concurrent runs. Explicit rerun:true is required to search a previously attempted operator again. No automatic triggers, retries or scheduled calls. The aiCalls table enforces a 100-attempt sliding-hour cap.
+- Search status is separate from "not found" fields: absent enrichment means unsearched; completed records timestamp, attempt count, response ID, consulted sources and per-fact source URL/evidence. Failed attempts are recorded and never automatically retried.
+- Each accepted fact must use a returned search URL and quote a passage found on that page; the saved value must occur in the supporting passage. Revenue rejects estimates/forecasts and unrelated amounts. Unavailable or unverifiable facts stay "not found".
+- Unit checks use fictional examples for repeat-run rules, privacy, one-call/output limits, invalid/unsearched sources, unavailable pages, invented amounts and estimated revenue. Existing dash checks pass; TypeScript and dev push pass.
+- Operator 1 completed with industry and two company-specific risks. Source review found a missed published operating-income figure; corrected the accounting-label validator and added a regression check. The owner-only verifyRevenueFromExistingSource action verified and saved the figure from a source already returned by the search, with no additional AI request or search. Actual company facts and evidence stay in Convex only.
+- Database audit verifies operator 1 has one attempt and one completed web search, with exactly one aiCalls record. A repeat trigger returns already_searched and leaves the audit unchanged. All ten rows remain; operators 2–10 were confirmed unchanged and unsearched.
+- Review in the development dashboard's Data → operators: open operatorId 1 and inspect enrichment.facts for individual source links and evidence. The returned figure carries its reporting period and the source's operating-income label; risks are dated by their cited report.
+- No production deployment or GitHub push for this milestone yet. Next: owner reviews operator 1's result before authorizing the other nine.
+
+## Milestone 2 ? remaining nine searched in dev; awaiting owner review
+
+- Owner confirmed operator 1 and authorized exactly one search each for operators 2?10. All nine completed successfully; no reruns were requested or performed.
+- Before/after comparison verifies operator 1 is unchanged. Database audit shows ten rows, ten AI attempt records total, and exactly one attempt and one completed web search per operator.
+- One of the nine newly searched operators has verified revenue and a stated risk; its industry remains not found. The other eight retain not found for all three fields because returned evidence did not pass page verification. This does not establish that no public information exists; PDF sources and unavailable pages are limitations of this pass.
+- Accepted facts retain their source URL and quoted evidence in enrichment.facts; consulted URLs remain in enrichment.consultedSources even when no fact could be verified. Names, profiles and results remain only in Convex, not in repository files.
+- Review on a phone in the development dashboard: Data ? operators ? open each row and expand enrichment.facts. No frontend, matching, WhatsApp, production deployment or GitHub push was added by this batch.
+- Next: review missing evidence from already consulted sources without another AI search.
+
+## Milestone 2 ? PDF checking and Indian entity corrections
+
+- Owner authorized fixing PDF evidence checking, correcting the broken company accent and rerunning only rows with missing facts once each.
+- Evidence fetching now follows validated HTTPS redirects, limits documents to 80 MB and extracts PDF text in the Convex Node runtime using pdf-parse. No separate service or extra AI calls for document reading. HTML checking remains supported.
+- A generated fictional PDF regression check confirms published revenue passes and an invented amount fails. Added checks for PDF line-break hyphenation and financial table headings that say revenues. Existing duplicate-run, source and estimate safeguards pass. TypeScript and dev deployment pass.
+- Real annual reports were read successfully inside Convex, including a 54 MB report. Configured research targets separately from original operator companies to use the requested Indian entities. Fixed the company accent in the database.
+- Exactly nine new searches ran, one each for operators 2?10 because each had at least one missing field. Operator 1 was verified unchanged. Total audit count is 19, with one attempt for operator 1 and two each for the other nine.
+- Recovered additional verified facts by reading sources already returned by these searches, with no extra AI requests. Indian company revenue was available for the brewery, so no global fallback was needed. Each saved fact retains evidence and a source link. Financial periods differ; some results are from older investor presentations or a published draft annual return and must be shown with their period.
+- Some fields remain not found because sources could not be retrieved or no company-specific supported statement was established. No figure was invented and no generic customer problem was substituted.
+- Code and data checked in dev; production shipping remains after owner approval.
+
+## Milestone 2 - risks-only follow-up in dev
+
+- Owner authorized one further search for rows whose stated risks remained not found, targeting latest annual-report Management Discussion and Analysis / Risks and Concerns or latest earnings calls.
+- Added a separate risks-only reservation/action and evidence recovery path. Neither patches revenue or industry, including their per-fact evidence. Searches remain internal, company-only, one tool call each, no retries, and use the existing hourly cap.
+- Selected seven rows (IDs 3, 4, 5, 6, 7, 8, 10). Six searches completed; one failed and was not retried. Total attempt audit count increased from 19 to 26, exactly seven new attempts. Existing risks on the other three rows were untouched.
+- Verified source passages from returned latest earnings calls and saved up to three plain-language risks with a source and verbatim evidence for each. One company risk is explicitly from India-specific remarks in its global group earnings call, concerning currency translation; it is not a generic global operating risk. Unsupported Indian entity risks remain not found.
+- Database comparisons confirmed all ten revenue and industry values and evidence unchanged; the three unselected rows were completely unchanged. Unit checks confirm duplicate prevention, financial/industry preservation on finish and recovery, and rejection of invented evidence. PDF tests, TypeScript and dev push pass.
+- No further AI requests were made for source reading or recovery. Results remain only in Convex; no personal data was written to project files. Next: owner reviews the updated risks table and remaining gaps.
+
+## Milestone 2 - approved for shipping
+
+- Owner authorised one retry of the failed risks search, latest full-year revenue refresh for one operator, leaving the three specified gaps not found, and commit/push/deploy to close milestone 2.
+- The one authorised retry failed again; no third attempt was made. The separate risks reservation now permits an explicit retry of a failed attempt only and increments its count, never automatically.
+- Latest FY2025-26 revenue was verified and saved from the annual report already returned by the earlier search, with no new AI search for revenue. Other revenue, industries, risks and the three specified gaps were preserved. Real company figures remain in Convex only.
+- Marked milestone 2 complete with accepted missing fields; milestone 3 is next. Production code shipping does not copy development operator data.

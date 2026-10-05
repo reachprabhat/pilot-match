@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { enrichmentValidator } from "./enrichmentValidators";
 
 export default defineSchema({
   operators: defineTable({
@@ -8,6 +9,8 @@ export default defineSchema({
     whatsappNumber: v.string(),
     headline: v.string(),
     company: v.string(),
+    researchCompany: v.optional(v.string()),
+    allowGlobalRevenue: v.optional(v.boolean()),
     currentRole: v.string(),
     location: v.string(),
     about: v.string(),
@@ -15,5 +18,12 @@ export default defineSchema({
     revenueBand: v.string(),
     companyProblems: v.string(),
     sourceLink: v.string(),
+    enrichment: v.optional(enrichmentValidator),
+    riskSearch: v.optional(enrichmentValidator),
   }).index("by_operator_id", ["operatorId"]),
+  aiCalls: defineTable({
+    operatorId: v.string(),
+    startedAt: v.number(),
+    purpose: v.literal("operator_enrichment"),
+  }).index("by_started_at", ["startedAt"]),
 });

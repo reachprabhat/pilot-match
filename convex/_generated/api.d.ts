@@ -8,8 +8,15 @@
  * @module
  */
 
+import type * as enrichmentValidators from "../enrichmentValidators.js";
+import type * as lib_enrichment from "../lib/enrichment.js";
+import type * as lib_evidenceSource from "../lib/evidenceSource.js";
 import type * as lib_repairDash from "../lib/repairDash.js";
+import type * as operatorEnrichment from "../operatorEnrichment.js";
+import type * as operatorEnrichmentStore from "../operatorEnrichmentStore.js";
 import type * as operatorMaintenance from "../operatorMaintenance.js";
+import type * as operatorRiskSearch from "../operatorRiskSearch.js";
+import type * as operatorRiskStore from "../operatorRiskStore.js";
 
 import type {
   ApiFromModules,
@@ -18,8 +25,15 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  enrichmentValidators: typeof enrichmentValidators;
+  "lib/enrichment": typeof lib_enrichment;
+  "lib/evidenceSource": typeof lib_evidenceSource;
   "lib/repairDash": typeof lib_repairDash;
+  operatorEnrichment: typeof operatorEnrichment;
+  operatorEnrichmentStore: typeof operatorEnrichmentStore;
   operatorMaintenance: typeof operatorMaintenance;
+  operatorRiskSearch: typeof operatorRiskSearch;
+  operatorRiskStore: typeof operatorRiskStore;
 }>;
 
 /**
