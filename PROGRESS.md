@@ -85,3 +85,17 @@
 - After deployment, verified the PDF reader in production against a real annual report without an AI request. Production OPENAI_API_KEY is present; no key value was printed.
 - Live browser checks passed at desktop, 390px phone and 320px small phone: fonts load, no overflow or browser errors, ask navigation works, Search remains disabled, no input is saved and typing sends no requests.
 - Operator data remains in development; code deployment did not copy real profiles to production. Owner changes to AGENTS.md were preserved outside the implementation commit.
+
+## Milestone 3 - two founders and personal links checked in dev
+
+- Owner approved importing the two founders, generating personal links, showing the founder company on the existing ask screen and publishing a development preview before production shipping.
+- Found the source at C:\Users\reach\OneDrive\Documents\build-sprint-data\MVP - Founder data.csv. It contains exactly two populated rows. Imported using npx convex import into dev through a normalized temporary JSON outside the project; deleted the temporary file and verified the original CSV hash unchanged.
+- Independent database comparison found exactly two founders and zero mismatches across all 12 source fields. IDs and WhatsApp numbers remain strings. Actual profiles and contacts live only in Convex; none are in project files.
+- Generated two distinct 256-bit random codes; stored only SHA-256 fingerprints in indexed founder rows. Raw codes are not stored in the database or repository and are printed only in the owner handoff. Links use URL fragments and are reusable without login.
+- Internal indexed lookup and a same-origin POST endpoint return only the corresponding company; names, phones, full profiles and database IDs are never returned to the page. Invalid/unknown links cannot open a founder ask screen. Responses are not cached.
+- Links open directly on the ask screen, with company text rendered safely, disabled Search and Matching opens soon. Added loading, invalid-link and connection-retry messages using the existing design. Back clears company context, URL fragment and typed ask. Reloading keeps the link identity but clears the ask. No asks are saved.
+- A browser check exposed stale cached JavaScript. Build output now versions script and stylesheet URLs by their content; a regression check covers cache freshness. No extra public files or dependency installation was needed.
+- Hosted dev browser checks passed for both personal links at 1280px desktop, 390px phone and 320px small phone. Correct company, no overflow, disabled Search, no saved browser data, no typing requests and cleared input on reload. Link switching, back cleanup, unknown/malformed links and offline retry pass with no browser exceptions. Existing landing/placeholder flow also passes.
+- Access checks use fictional data to verify privacy, fingerprint lookup, malformed links, server failures and prevention of accidental link rotation. All existing backend checks and TypeScript pass. Design detector findings only flag the font and palette explicitly required by DESIGN.md.
+- Development preview: https://neat-hyena-46.convex.site. No production deployment, GitHub push, AI call, search or WhatsApp action for this milestone.
+- Next: owner checks the two personal links on a phone before production shipping. Existing owner edits in AGENTS.md and PRODUCT.md remain outside this change.

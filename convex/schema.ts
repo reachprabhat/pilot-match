@@ -3,6 +3,12 @@ import { v } from "convex/values";
 import { enrichmentValidator } from "./enrichmentValidators";
 
 export default defineSchema({
+  founders: defineTable({
+    founderId:v.string(), name:v.string(), whatsappNumber:v.string(),
+    headline:v.string(),company:v.string(),currentRole:v.string(),location:v.string(),
+    about:v.string(),industry:v.string(),pilotDone:v.string(),topFeatures:v.string(),
+    freeTextSearches:v.string(),linkHash:v.optional(v.string()),
+  }).index("by_founder_id",["founderId"]).index("by_link_hash",["linkHash"]),
   operators: defineTable({
     operatorId: v.string(),
     name: v.string(),
