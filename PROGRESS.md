@@ -105,3 +105,8 @@
 - Owner confirmed both personal links work on a phone and authorised commit, push and deploy.
 - Shipping includes the two founder rows in production with their existing link fingerprints, so the same codes work on the production address. No operators or AI actions are included.
 
+- Shipping completed: committed and pushed to main, then npm run deploy published the backend and six static files to https://first-guanaco-957.convex.site.
+- Production has exactly two founders; all source fields and existing link fingerprints match development. The temporary import file stayed outside the project and was deleted.
+- Both production links passed live browser checks at desktop, 390px phone and 320px small phone. Correct company, disabled Search, no saved ask, no typing requests, invalid-link handling and offline retry all pass. Inspected the live phone screen. No AI, search or WhatsApp call was made.
+- Milestone 3 is complete; milestone 4 is next. Owner edits in AGENTS.md and PRODUCT.md remain untouched.
+
