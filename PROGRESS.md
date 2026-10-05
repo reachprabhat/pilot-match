@@ -80,3 +80,8 @@
 - The one authorised retry failed again; no third attempt was made. The separate risks reservation now permits an explicit retry of a failed attempt only and increments its count, never automatically.
 - Latest FY2025-26 revenue was verified and saved from the annual report already returned by the earlier search, with no new AI search for revenue. Other revenue, industries, risks and the three specified gaps were preserved. Real company figures remain in Convex only.
 - Marked milestone 2 complete with accepted missing fields; milestone 3 is next. Production code shipping does not copy development operator data.
+
+- Shipping completed: implementation committed and pushed to main; npm run deploy successfully published backend functions and six static files to https://first-guanaco-957.convex.site.
+- After deployment, verified the PDF reader in production against a real annual report without an AI request. Production OPENAI_API_KEY is present; no key value was printed.
+- Live browser checks passed at desktop, 390px phone and 320px small phone: fonts load, no overflow or browser errors, ask navigation works, Search remains disabled, no input is saved and typing sends no requests.
+- Operator data remains in development; code deployment did not copy real profiles to production. Owner changes to AGENTS.md were preserved outside the implementation commit.
