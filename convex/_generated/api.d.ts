@@ -8,13 +8,19 @@
  * @module
  */
 
+import type * as lib_repairDash from "../lib/repairDash.js";
+import type * as operatorMaintenance from "../operatorMaintenance.js";
+
 import type {
   ApiFromModules,
   FilterApi,
   FunctionReference,
 } from "convex/server";
 
-declare const fullApi: ApiFromModules<{}>;
+declare const fullApi: ApiFromModules<{
+  "lib/repairDash": typeof lib_repairDash;
+  operatorMaintenance: typeof operatorMaintenance;
+}>;
 
 /**
  * A utility for referencing Convex functions in your app's public API.
