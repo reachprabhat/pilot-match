@@ -22,8 +22,8 @@ Not in v1: Sign up, Login, Operator keying their pain point and best founder mat
 - [a rule of your own: anything you've had to say twice]
 
 ## 3. Shipping
-Live link: [your .convex.site link]
-Repo: [github.com/you/your-repo], publi
+Live link: https://first-guanaco-957.convex.site
+Repo: https://github.com/reachprabhat/pilot-match, public
 Deploy: npm run deploy. After I say a milestone works: commit, push, then deploy.
 Keys: OPENAI_API_KEY, WHATSAPP_TOKEN lives in Convex environment variables. Never ask me to paste it into chat.
 Real people's data (operator and founder names, phone numbers, profiles) goes into the Convex database only. Never in the repo, not even as a test file. Tests use made-up examples.
@@ -41,4 +41,3 @@ When a cap is hit or the call fails: show "Busy right now. Try again in a few mi
 Industry, company problems, source link must be populated with "not found" when nothing is public.
 Web search runs only when an operator is loaded, never during a founder search. At most one web search per operator, only when I load them. Re-run only when i trigger it.
 Login: none in v1
-

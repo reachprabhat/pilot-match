@@ -2,8 +2,8 @@
 
 ## Milestones
 
-- Milestone 0 — now: Build the landing page using the words and design in DESIGN.md.
-- Milestone 1: As product owner, load 10 senior operator profiles in supply chain and manufacturing in India, including WhatsApp contact numbers.
+- Milestone 0 — complete: Build the landing page using the words and design in DESIGN.md.
+- Milestone 1 — next: As product owner, load 10 senior operator profiles in supply chain and manufacturing in India, including WhatsApp contact numbers.
 - Milestone 2: As product owner, enrich each operator with company revenue, industry and stated problems once at load time.
 - Milestone 3: As product owner, load founder profiles including WhatsApp contact numbers and generate a personal link for each founder.
 - Milestone 4: As product owner, control the maximum searches allowed per founder (N) to control AI usage.
