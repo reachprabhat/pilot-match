@@ -15,6 +15,14 @@
       <section id="landing" class="panel" aria-labelledby="landing-title">
         <h1 id="landing-title">Meet the best operators</h1>
         <p>Connects best operators to startup founders with new innovative solutions</p>
+        <section id="landing-how" aria-labelledby="landing-how-title">
+          <h2 id="landing-how-title">How it works</h2>
+          <ol>
+            <li>Ask</li>
+            <li>Match</li>
+            <li>Meet</li>
+          </ol>
+        </section>
         <button id="open-ask" class="primary" type="button">Founder, enter your requirements</button>
       </section>
       <section id="ask" class="panel" aria-labelledby="ask-title" hidden>
@@ -35,8 +43,10 @@
         <button id="retry-link" class="primary" type="button" hidden>Try again</button>
       </section>
       <section id="matches" class="panel matches-panel" aria-labelledby="matches-title" hidden>
+        <a id="back-to-ask" class="back" href="?screen=ask">Back to my ask</a>
         <h1 id="matches-title" tabindex="-1">Your two best-fit operators</h1>
         <div id="match-cards"></div>
+        <p id="results-message" role="status" hidden></p>
       </section>
     </main>
   </body>

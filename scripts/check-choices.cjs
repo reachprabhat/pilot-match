@@ -4,7 +4,7 @@ const context={module:{exports:{}},require:n=>n==='./_generated/server'?{interna
 vm.runInNewContext(esbuild.transformSync(fs.readFileSync('convex/choices.ts','utf8'),{loader:'ts',format:'cjs'}).code,context);
 const {save,latest}=context.module.exports;
 const founders=[{_id:'fictional-founder-1',linkHash:'a'.repeat(64)},{_id:'fictional-founder-2',linkHash:'b'.repeat(64)}];
-const searches=[{founderId:founders[0]._id,status:'completed',matches:[{operatorId:'example-one',score:90,why:'Example fit'},{operatorId:'example-two',score:80,why:'Example fit'}]}];
+const searches=[{founderId:founders[0]._id,status:'completed',ask:'A fictional manufacturing pilot',matches:[{operatorId:'example-one',score:90,why:'Example fit'},{operatorId:'example-two',score:80,why:'Example fit'}]}];
 const choices=[];const tables={founders,founderSearches:searches,founderChoices:choices};
 const db={query:table=>({withIndex:(index,callback)=>{
   const conditions=[];const q={eq:(key,value)=>{conditions.push([key,value]);return q;}};callback(q);
@@ -25,6 +25,7 @@ const db={query:table=>({withIndex:(index,callback)=>{
  assert.equal((await save.handler({db},{linkHash:founders[0].linkHash,operatorId:'unmatched',status:'Requested'})).error,'invalid_match');
  assert.equal((await save.handler({db},{linkHash:'unknown',operatorId:'example-one',status:'Requested'})).error,'invalid_link');
  assert.equal(await latest.handler({db},{linkHash:'unknown'}),null);
- assert.deepEqual(JSON.parse(JSON.stringify(await latest.handler({db},{linkHash:founders[1].linkHash}))),{matches:[]});
+ assert.equal((await latest.handler({db},{linkHash:founders[0].linkHash})).ask,'A fictional manufacturing pilot');
+ assert.deepEqual(JSON.parse(JSON.stringify(await latest.handler({db},{linkHash:founders[1].linkHash}))),{ask:'',matches:[]});
  console.log('Choice checks passed: all three statuses reload, one row per founder/operator, other founders and unmatched operators blocked, no search or matching writes.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

@@ -11,21 +11,24 @@ await send('Page.enable');await send('Network.enable');await send('Runtime.enabl
 for(const [view,width,height] of [['desktop',1280,800],['phone',390,844],['small-phone',320,740]]){
 await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});
 for(const link of links){await send('Page.navigate',{url:'about:blank'});await wait('location.href==="about:blank"');await send('Page.navigate',{url:link.url});await wait('document.getElementById("ask")&&!document.getElementById("ask").hidden&&!document.getElementById("founder-company").hidden');
+const savedAsk=await evaluate(`fetch('/api/matches',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:personalCode})}).then(r=>r.json()).then(r=>r.ask||'')`);
+await wait('document.getElementById("pilot-ask").value==='+JSON.stringify(savedAsk));
 const state=await evaluate('({company:document.getElementById("founder-company").textContent,landingHidden:document.getElementById("landing").hidden,searchDisabled:document.querySelector("#ask .primary").disabled,note:document.getElementById("matching-note").textContent,overflow:document.documentElement.scrollWidth>innerWidth,storage:localStorage.length+sessionStorage.length})');
-assert.equal(state.company,'For '+link.company);assert.equal(state.landingHidden,true);assert.equal(state.searchDisabled,true);
+assert.equal(state.company,'For '+link.company);assert.equal(state.landingHidden,true);assert.equal(state.searchDisabled,!savedAsk||(link.searchesRemaining??3)===0);
 const remaining=link.searchesRemaining??3;
 assert.equal(state.note,remaining===0?'You’ve used all 3 searches.':`${remaining} ${remaining===1?'search':'searches'} remaining. Maximum 300 words.`);assert.equal(state.overflow,false);assert.equal(state.storage,0);
 const prior=requests.length;await evaluate('document.getElementById("pilot-ask").value="A fictional pilot ask";document.getElementById("pilot-ask").dispatchEvent(new Event("input",{bubbles:true}))');await new Promise(r=>setTimeout(r,300));assert.equal(requests.length,prior);
-await send('Page.reload',{ignoreCache:true});await wait('document.getElementById("ask")&&!document.getElementById("ask").hidden&&!document.getElementById("founder-company").hidden');assert.equal(await evaluate('document.getElementById("pilot-ask").value'),'');assert.equal(await evaluate('document.getElementById("founder-company").textContent'),'For '+link.company);
-console.log(JSON.stringify({view,founderId:link.founderId,correctCompany:true,disabledSearch:true,noTypingRequests:true,reloadClearsAsk:true,noOverflow:true}));
+const priorOrigin=await evaluate('performance.timeOrigin');await send('Page.reload',{ignoreCache:true});await wait('performance.timeOrigin!=='+priorOrigin+'&&document.getElementById("ask")&&!document.getElementById("ask").hidden&&!document.getElementById("founder-company").hidden&&document.getElementById("pilot-ask").value==='+JSON.stringify(savedAsk));assert.equal(await evaluate('document.getElementById("founder-company").textContent'),'For '+link.company);
+console.log(JSON.stringify({view,founderId:link.founderId,correctCompany:true,searchAvailabilityCorrect:true,noTypingRequests:true,reloadRestoresSavedAsk:true,noOverflow:true}));
 }
 }
 await evaluate('location.hash='+JSON.stringify('#f='+links[0].code));await wait('document.getElementById("founder-company").textContent==='+JSON.stringify('For '+links[0].company));
 await evaluate('location.hash='+JSON.stringify('#f='+links[1].code));await wait('document.getElementById("founder-company").textContent==='+JSON.stringify('For '+links[1].company));
-await evaluate('document.getElementById("back").click()');assert.equal(await evaluate('location.hash'),'');assert.equal(await evaluate('document.getElementById("founder-company").textContent'),'');assert.equal(await evaluate('document.getElementById("landing").hidden'),false);
+await evaluate('document.getElementById("back").click()');assert.equal(await evaluate('location.hash'),'#f='+links[1].code);assert.equal(await evaluate('document.getElementById("founder-company").textContent'),'For '+links[1].company);assert.equal(await evaluate('document.getElementById("landing").hidden'),false);
+await evaluate('document.getElementById("open-ask").click()');assert.equal(await evaluate('document.getElementById("ask").hidden'),false);assert.equal(await evaluate('location.hash'),'#f='+links[1].code);
 const base=new URL(links[0].url).origin;
 await send('Page.navigate',{url:base+'/#f='+'z'.repeat(43)});await wait('document.getElementById("link-title")&&document.getElementById("link-title").textContent==="This personal link is not valid"');assert.equal(await evaluate('document.getElementById("ask").hidden'),true);
 await send('Page.navigate',{url:base+'/#f=short'});await wait('document.getElementById("link-title")&&document.getElementById("link-title").textContent==="This personal link is not valid"');
 await send('Network.emulateNetworkConditions',{offline:true,latency:0,downloadThroughput:0,uploadThroughput:0});await evaluate('location.hash='+JSON.stringify('#f='+links[0].code));await wait('document.getElementById("retry-link")&&!document.getElementById("retry-link").hidden');await send('Network.emulateNetworkConditions',{offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1});await evaluate('document.getElementById("retry-link").click()');await wait('!document.getElementById("ask").hidden');assert.equal(await evaluate('document.getElementById("founder-company").textContent'),'For '+links[0].company);
-assert.equal(errors.length,0);console.log('Link switching, back cleanup, unknown/malformed links and offline retry passed; no browser exceptions.');ws.close();
+assert.equal(errors.length,0);console.log('Link switching, personal-link landing round trip, unknown/malformed links and offline retry passed; no browser exceptions.');ws.close();
 })().catch(e=>{console.error(e.message);process.exit(1)});

@@ -73,7 +73,9 @@ textarea::placeholder { color: #655d54; opacity: 1; }
 #link-message.error { color: #a32720; }
 #search-message { margin: 16px 0 0; }
 #search-message.error { color: #a32720; }
-.matches-panel { margin-top: 24px; }
+#results-message { margin: 24px 0 0; }
+#results-message.error { color: #a32720; }
+.matches-panel > .back { display: inline-block; }
 #match-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
 #match-cards article { min-width: 0; }
 #match-cards h2 { font-size: 20px; line-height: 1.4; margin: 0 0 16px; }
@@ -88,11 +90,25 @@ textarea::placeholder { color: #655d54; opacity: 1; }
 #match-cards .choice-status { margin-top: 16px; min-height: 26px; font-weight: 600; }
 .choice-status.error { color: #a32720; font-weight: 400; }
 ::selection { background: #d9d1c6; color: #26231f; }
+#landing-how { display: none; }
 @media (max-width: 600px) {
-  main { min-height: 100svh; align-items: end; padding: 24px 16px; }
-  .panel { padding: 24px; }
-  #landing .primary { width: 100%; }
-  .search-actions { flex-direction: column; align-items: stretch; }
+  main { min-height: 100svh; align-items: start; padding: 24px 16px; }
+  .panel { padding: 24px; display: flex; flex-direction: column; min-height: min(640px, calc(100svh - 48px)); }
+  .panel > h1 { font-size: 40px; line-height: 1.2; order: -2; }
+  .panel > .back { order: -1; align-self: flex-start; }
+  .panel .primary { width: 100%; }
+  .panel > .primary { margin-top: auto; }
+  #landing-how { display: block; margin-bottom: 32px; }
+  #landing-how h2 { font-size: 20px; line-height: 1.4; margin: 0 0 16px; }
+  #landing-how ol { margin: 0; padding-left: 24px; }
+  #landing-how li { line-height: 1.6; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  #landing-how li:last-child { border-bottom: 0; }
+  .search-actions { flex-direction: column; align-items: stretch; margin-top: auto; padding-top: 24px; order: 2; }
+  #search-message { margin-bottom: 16px; }
+  #match-cards article { display: flex; flex-direction: column; }
+  .choice-actions { order: 2; margin-top: auto; padding-top: 24px; }
+  .choice-actions .primary { grid-row: 2; }
+  #match-cards .choice-status { order: 1; }
   textarea { padding: 16px; }
   #match-cards { grid-template-columns: 1fr; }
   #match-cards article + article { padding-top: 24px; border-top: 1px solid var(--line); }

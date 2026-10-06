@@ -18,7 +18,41 @@ let submitting;
 let pendingRequest;
 const matchesSection = document.getElementById('matches');
 const matchCards = document.getElementById('match-cards');
+const backToAsk = document.getElementById('back-to-ask');
+const resultsMessage = document.getElementById('results-message');
 let searchVersion = 0;
+
+function renderFounderScreen(focus = true) {
+  if (!personalCode) return;
+  const results = new URL(location.href).searchParams.get('screen') === 'results' && matchCards.children.length === 2;
+  landing.hidden = true;
+  linkState.hidden = true;
+  ask.hidden = results;
+  matchesSection.hidden = !results;
+  const backUrl = new URL(location.href);
+  backUrl.searchParams.set('screen', 'ask');
+  backToAsk.href = backUrl.pathname + backUrl.search + backUrl.hash;
+  if (focus) {
+    document.getElementById(results ? 'matches-title' : 'ask-title').focus();
+    window.scrollTo(0, 0);
+  }
+}
+
+function navigateFounderScreen(screen) {
+  const url = new URL(location.href);
+  url.searchParams.set('screen', screen);
+  history.pushState(null, '', url.pathname + url.search + url.hash);
+  renderFounderScreen();
+}
+
+backToAsk.addEventListener('click', event => {
+  event.preventDefault();
+  navigateFounderScreen('ask');
+});
+window.addEventListener('popstate', () => {
+  if (personalCode && location.hash === '#f=' + personalCode) renderFounderScreen();
+  else openPersonalLink();
+});
 
 function clearMatches() {matchesSection.hidden = true; matchCards.replaceChildren();}
 function showMatches(matches, focus = true) {
@@ -93,11 +127,11 @@ function showMatches(matches, focus = true) {
     card.append(title, score, reason, actions, status);
     matchCards.append(card);
   }
-  matchesSection.hidden = false;
-  if (focus) document.getElementById('matches-title').focus();
+  if (focus) navigateFounderScreen('results');
+  else renderFounderScreen(false);
 }
 
-async function restoreMatches(code, signal) {
+async function restoreMatches(code, signal, restoreAsk = false) {
   const version = searchVersion;
   const response = await fetch('/api/matches', {
     method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({code}),
@@ -106,6 +140,10 @@ async function restoreMatches(code, signal) {
   if (!response.ok) throw new Error('Could not load saved matches');
   const result = await response.json();
   if (personalCode !== code || version !== searchVersion) return;
+  if (restoreAsk && typeof result.ask === 'string') {
+    pilotAsk.value = result.ask;
+    updateSearchButton();
+  }
   if (result.matches?.length) showMatches(result.matches, false);
 }
 
@@ -113,6 +151,9 @@ function showSearchMessage(message, error = false) {
   searchMessage.textContent = message;
   searchMessage.hidden = !message;
   searchMessage.classList.toggle('error', error);
+  resultsMessage.textContent = message;
+  resultsMessage.hidden = !message || matchesSection.hidden;
+  resultsMessage.classList.toggle('error', error);
 }
 
 function updateSearchButton() {
@@ -190,7 +231,10 @@ async function openPersonalLink() {
     linkState.hidden = true;
     ask.hidden = false;
     document.getElementById('ask-title').focus();
-    try { await restoreMatches(personalCode, current.signal); }
+    try {
+      await restoreMatches(personalCode, current.signal, true);
+      if (lookup === current) renderFounderScreen();
+    }
     catch { if (lookup === current) showSearchMessage('Your saved matches could not load. Reload to try again.', true); }
   } catch {
     if (lookup !== current) return;
@@ -213,16 +257,17 @@ document.getElementById('back').addEventListener('click', () => {
   clearMatches();
   submitting?.abort();
   submitting = undefined;
-  personalCode = undefined;
   pendingRequest = undefined;
   showSearchMessage('');
   updateSearchButton();
   lookup?.abort();
   lookup = undefined;
-  history.replaceState(null, '', '/');
-  company.hidden = true;
-  company.textContent = '';
-  pilotAsk.value = '';
+  history.replaceState(null, '', personalCode ? '/#f=' + personalCode : '/');
+  if (!personalCode) {
+    company.hidden = true;
+    company.textContent = '';
+    pilotAsk.value = '';
+  }
   ask.hidden = true;
   landing.hidden = false;
   openAsk.focus();

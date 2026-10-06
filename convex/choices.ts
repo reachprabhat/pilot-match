@@ -5,7 +5,7 @@ import {matchValidator} from "./matchingValidators";
 
 export const latest = internalQuery({
   args:{linkHash:v.string()},
-  returns:v.union(v.null(),v.object({matches:v.array(v.object({...matchValidator.fields,choice:v.union(choiceStatusValidator,v.null())}))})),
+  returns:v.union(v.null(),v.object({ask:v.string(),matches:v.array(v.object({...matchValidator.fields,choice:v.union(choiceStatusValidator,v.null())}))})),
   handler:async(ctx,args)=>{
     const founder=await ctx.db.query("founders").withIndex("by_link_hash",q=>q.eq("linkHash",args.linkHash)).unique();
     if(!founder)return null;
@@ -14,7 +14,7 @@ export const latest = internalQuery({
       const choice=await ctx.db.query("founderChoices").withIndex("by_founder_operator",q=>q.eq("founderId",founder._id).eq("operatorId",match.operatorId)).unique();
       return {...match,choice:choice?.status??null};
     }));
-    return {matches};
+    return {ask:search?.ask??"",matches};
   },
 });
 

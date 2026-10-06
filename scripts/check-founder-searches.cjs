@@ -3,8 +3,8 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),os=require('node:os');
 const base='https://neat-hyena-46.convex.site';
 (async()=>{
-  const tabs=await(await fetch('http://127.0.0.1:9222/json')).json();
-  const ws=new WebSocket(tabs.find(tab=>tab.type==='page').webSocketDebuggerUrl);
+  const tab=await(await fetch('http://127.0.0.1:9222/json/new?about:blank',{method:'PUT'})).json();
+  const ws=new WebSocket(tab.webSocketDebuggerUrl);
   await new Promise(resolve=>ws.addEventListener('open',resolve,{once:true}));
   let id=0,count=0,failNext=false,searchRequests=0;
   const pending=new Map(),errors=[],requestIds=[];
@@ -19,7 +19,7 @@ const base='https://neat-hyena-46.convex.site';
       (async()=>{
         let body,status=200;
         if(new URL(event.request.url).pathname==='/api/founder')body={company:'Fictional Example Company',searchCount:count,searchLimit:3,searchesRemaining:3-count};
-        else if(new URL(event.request.url).pathname==='/api/matches')body={matches:count?matches.map(match=>({...match,choice:null})):[]};
+        else if(new URL(event.request.url).pathname==='/api/matches')body={ask:count?'A fictional saved ask':'',matches:count?matches.map(match=>({...match,choice:null})):[]};
         else if(new URL(event.request.url).pathname==='/api/search'){
           searchRequests++;
           const request=JSON.parse(event.request.postData);requestIds.push(request.requestId);
@@ -44,19 +44,32 @@ const base='https://neat-hyena-46.convex.site';
     assert.equal(await evaluate('searchButton.disabled'),true);
     await type('word '.repeat(301));assert.equal(await evaluate('searchButton.disabled'),true);
     await type('A fictional manufacturing pilot');
+    const personalFragment=await evaluate('location.hash');
+    const requestsBeforeLanding=searchRequests;
+    await evaluate('document.getElementById("back").click()');
+    assert.equal(await evaluate('landing.hidden'),false);
+    assert.equal(await evaluate('location.hash'),personalFragment,'Back preserves the personal link');
+    await evaluate('openAsk.click()');
+    assert.equal(await evaluate('ask.hidden'),false);
+    assert.equal(await evaluate('pilotAsk.value'),'A fictional manufacturing pilot','round trip preserves the ask');
+    assert.equal(await evaluate('searchButton.disabled'),false,'Search stays enabled after the landing round trip');
+    assert.equal(searchRequests,requestsBeforeLanding,'landing round trip does not search');
     if(name==='phone'){
       failNext=true;await evaluate('searchButton.click()');await wait('!submitting && searchMessage.textContent==="Busy right now. Try again in a few minutes."');
       assert.equal(count,0);assert.equal(await evaluate('matchesSection.hidden'),true);assert.equal(await evaluate('pilotAsk.value'),'A fictional manufacturing pilot');
       const failedId=requestIds.at(-1);await evaluate('searchButton.click()');await wait('!submitting && remaining===2');assert.notEqual(requestIds.at(-1),failedId,'explicit retry after a known failure gets a new request ID');
+      await evaluate('document.getElementById("back-to-ask").click()');await wait('!ask.hidden && matchesSection.hidden');
       count=0;await evaluate('window.dispatchEvent(new Event("focus"))');await wait('remaining===3');
     }
     for(let n=1;n<=3;n++){
+      if(n>1){await evaluate('document.getElementById("back-to-ask").click()');await wait('!ask.hidden && matchesSection.hidden');}
       await type('Fictional pilot '+n);const before=searchRequests;await evaluate('searchButton.click();searchButton.click()');
       await wait(`!submitting && remaining===${3-n} && !matchesSection.hidden`);
       assert.equal(searchRequests,before+1,'double click sends one request');
       assert.equal(await evaluate('matchCards.querySelectorAll("article").length'),2);
       assert.equal(await evaluate('matchCards.querySelector("h2").textContent'),'Operator example-one');
       assert.equal(await evaluate('matchCards.querySelector(".fit-score").textContent'),'93/100');
+      assert.equal(await evaluate('ask.hidden'),true,'results are a separate screen');
     }
     assert.equal(await evaluate('searchButton.disabled'),true);
     assert.equal(await evaluate('matchingNote.textContent'),'You’ve used all 3 searches.');
@@ -64,12 +77,16 @@ const base='https://neat-hyena-46.convex.site';
     if(name==='desktop')assert.equal(rectangles[0].top,rectangles[1].top);else assert.ok(rectangles[1].top>rectangles[0].top);
     assert.equal(await evaluate('document.documentElement.scrollWidth>innerWidth'),false);
     const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true});fs.writeFileSync(path.join(os.tmpdir(),'pilot-match-matching-'+name+'.png'),Buffer.from(shot.data,'base64'));
-    await send('Page.reload',{ignoreCache:true});await wait('document.getElementById("ask")&&!document.getElementById("ask").hidden&&remaining===0');
+    const previousOrigin=await evaluate('performance.timeOrigin');
+    await send('Page.reload',{ignoreCache:true});await wait(`performance.timeOrigin!==${previousOrigin} && typeof remaining!=='undefined' && remaining===0 && !matchesSection.hidden`);
     await wait('!matchesSection.hidden && matchCards.children.length===2');
     assert.equal(await evaluate('searchButton.disabled'),true);assert.equal(await evaluate('matchesSection.hidden'),false);
+    const requestsBeforeBack=searchRequests;
+    await evaluate('document.getElementById("back-to-ask").click()');await wait('!ask.hidden && matchesSection.hidden');
+    assert.equal(searchRequests,requestsBeforeBack,'back does not search');assert.equal(count,3);
     count=0;await evaluate('window.dispatchEvent(new Event("focus"))');await wait('remaining===3');await type('A fictional ask after reset');assert.equal(await evaluate('searchButton.disabled'),false);
     await evaluate('document.getElementById("back").click()');assert.equal(await evaluate('matchesSection.hidden'),true);
     console.log(name+': two anonymous cards, correct layout, error recovery, no double clicks, cap/reload/reset and no overflow passed.');
   }
-  await send('Fetch.disable');assert.deepEqual(errors,[]);ws.close();console.log('Browser contract checks passed using fictional replies; no paid AI calls.');
+  await send('Fetch.disable');assert.deepEqual(errors,[]);ws.close();await fetch('http://127.0.0.1:9222/json/close/'+tab.id);console.log('Browser contract checks passed using fictional replies; no paid AI calls.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
