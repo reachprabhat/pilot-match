@@ -6,6 +6,8 @@ import {choiceStatusValidator} from "./choiceValidators";
 import {operatorResponseValidator} from "./responseValidators";
 
 export default defineSchema({
+  adminLinks: defineTable({owner:v.literal("Prabhat"),linkHash:v.string()})
+    .index("by_owner",["owner"]).index("by_link_hash",["linkHash"]),
   operatorResponses: defineTable({requestId:v.id("founderChoices"),searchId:v.id("founderSearches"),requestedAt:v.number(),status:operatorResponseValidator,updatedAt:v.number()})
     .index("by_request",["requestId"]),
   operatorLinks: defineTable({operatorId:v.string(),linkHash:v.string()})
@@ -13,7 +15,7 @@ export default defineSchema({
   operatorRequests: defineTable({founderId:v.id("founders"),operatorId:v.string(),searchId:v.id("founderSearches"),ask:v.string(),requestedAt:v.number()})
     .index("by_founder_operator",["founderId","operatorId"]),
   founderChoices: defineTable({founderId:v.id("founders"),operatorId:v.string(),status:choiceStatusValidator,updatedAt:v.number()})
-    .index("by_founder_operator",["founderId","operatorId"]).index("by_operator_status",["operatorId","status"]),
+    .index("by_founder_operator",["founderId","operatorId"]).index("by_operator_status",["operatorId","status"]).index("by_status_updated_at",["status","updatedAt"]),
   founders: defineTable({
     founderId:v.string(), name:v.string(), whatsappNumber:v.string(),
     headline:v.string(),company:v.string(),currentRole:v.string(),location:v.string(),

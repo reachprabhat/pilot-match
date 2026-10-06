@@ -11,7 +11,7 @@
 * Milestone 6 - complete: As a founder, see fitment scores and explanations and choose "Request to meet", "Park" or "Reject".
 * Milestone 7 - complete: Each operator gets a personal link, like founders, to a "Requests for you" screen listing founders who pressed "Request to meet", with the business opportunity card and no founder name or phone number.
 * Milestone 8 - complete: As an operator, tap "Interested" or "Not relevant"; the choice is saved and shown back to the founder as "Accepted" or "Declined", respectively.
-* Milestone 9: As Prabhat, open a private admin page with its own secret link, listing new requests so I can WhatsApp the operator their personal link by hand, and accepted requests with both founder and operator names and phone numbers so I can send the introduction by hand.
+* Milestone 9 - complete: As Prabhat, open a private admin page with its own secret link, listing new requests so I can WhatsApp the operator their personal link by hand, and accepted requests with both founder and operator names and phone numbers so I can send the introduction by hand.
 * Milestone 11 - complete: As a founder, use up to N searches before search is disabled.
 * Milestone 12: As a founder, close and reopen the app and find my data still there.
 * Milestone 13: As an operator, close and reopen the app and find my data still there.

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#493426" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Meeting requests</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/admin.css" />
+    <script src="/admin.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <section class="panel admin-panel" aria-labelledby="admin-title" aria-busy="true">
+        <h1 id="admin-title" tabindex="-1">Meeting requests</h1>
+        <p id="admin-message" role="status">Loading meeting requests...</p>
+        <div id="admin-content" hidden>
+          <section aria-labelledby="new-title">
+            <h2 id="new-title">New requests</h2>
+            <p>Send each operator their personal link from your private Operator Links file.</p>
+            <p id="new-empty">No new requests.</p>
+            <div id="new-list"></div>
+          </section>
+          <section aria-labelledby="accepted-title">
+            <h2 id="accepted-title">Accepted requests</h2>
+            <p>Send the introduction to the founder and operator by hand.</p>
+            <p id="accepted-empty">No accepted requests.</p>
+            <div id="accepted-list"></div>
+          </section>
+          <button id="admin-more" class="secondary" type="button" hidden>Show more requests</button>
+        </div>
+        <button id="admin-refresh" class="primary" type="button" hidden>Refresh requests</button>
+      </section>
+    </main>
+  </body>
+</html>

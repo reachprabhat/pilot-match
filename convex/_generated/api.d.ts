@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as adminLinks from "../adminLinks.js";
+import type * as adminRequests from "../adminRequests.js";
 import type * as choiceValidators from "../choiceValidators.js";
 import type * as choices from "../choices.js";
 import type * as enrichmentValidators from "../enrichmentValidators.js";
@@ -41,6 +43,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  adminLinks: typeof adminLinks;
+  adminRequests: typeof adminRequests;
   choiceValidators: typeof choiceValidators;
   choices: typeof choices;
   enrichmentValidators: typeof enrichmentValidators;

@@ -9,6 +9,9 @@ const files = {
   '/operator.html': ['operator.html', 'text/html; charset=utf-8'],
   '/operator.css': ['operator.css', 'text/css; charset=utf-8'],
   '/operator.js': ['operator.js', 'text/javascript; charset=utf-8'],
+  '/admin.html': ['admin.html', 'text/html; charset=utf-8'],
+  '/admin.css': ['admin.css', 'text/css; charset=utf-8'],
+  '/admin.js': ['admin.js', 'text/javascript; charset=utf-8'],
   '/fonts/inter-regular.ttf': ['fonts/inter-regular.ttf', 'font/ttf'],
   '/fonts/inter-semibold.ttf': ['fonts/inter-semibold.ttf', 'font/ttf'],
 };
