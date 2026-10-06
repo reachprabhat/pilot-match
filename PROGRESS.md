@@ -168,3 +168,9 @@
 
 - Owner confirmed milestone 5 works and authorised commit, push and production deployment. Matching, search-limit, founder-access and Convex TypeScript checks passed before shipping.
 - Production preflight found no operator rows; the ten approved development profiles and their existing enrichment evidence will be copied into production with audit references remapped. No research or matching provider call will run during shipping, and real founder counts will be preserved.
+
+- Shipping completed: 85ae646 committed and pushed to main; npm run deploy published the Convex backend and six static files at https://first-guanaco-957.convex.site.
+- Copied ten approved operator rows and 17 historical enrichment audit records from dev to production, remapping audit IDs and verifying all profile/evidence fields. No enrichment rerun occurred. Production founder rows remained unchanged.
+- Live Chrome checks passed at desktop, 390px phone and 320px small phone with fictional intercepted replies: anonymous match cards, errors, double-click protection, three-search cap, reload/reset and no overflow. Inspected the phone screenshot.
+- Live backend checks used a disposable fictional founder: ten profiles available, failed attempt uncharged, completed cached matches returned twice through the HTTP endpoint with count one. No OpenAI call ran. Removed all fictional founder/search/attempt records and verified real founders unchanged.
+- Phone check: open your existing personal link at the production address, enter an ask and tap Search. Two anonymous cards show scores and reasons; successful searches count toward three. Next milestone is 6: Request to meet, Park and Reject.
