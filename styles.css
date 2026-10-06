@@ -71,6 +71,8 @@ textarea::placeholder { color: #655d54; opacity: 1; }
 .search-actions p { margin: 0; }
 #founder-company { margin-bottom: 24px; overflow-wrap: anywhere; }
 #link-message.error { color: #a32720; }
+#search-message { margin: 16px 0 0; }
+#search-message.error { color: #a32720; }
 ::selection { background: #d9d1c6; color: #26231f; }
 @media (max-width: 600px) {
   main { min-height: 100svh; align-items: end; padding: 24px 16px; }

@@ -9,6 +9,7 @@
  */
 
 import type * as enrichmentValidators from "../enrichmentValidators.js";
+import type * as founderSearches from "../founderSearches.js";
 import type * as founders from "../founders.js";
 import type * as http from "../http.js";
 import type * as lib_enrichment from "../lib/enrichment.js";
@@ -19,6 +20,7 @@ import type * as operatorEnrichmentStore from "../operatorEnrichmentStore.js";
 import type * as operatorMaintenance from "../operatorMaintenance.js";
 import type * as operatorRiskSearch from "../operatorRiskSearch.js";
 import type * as operatorRiskStore from "../operatorRiskStore.js";
+import type * as searchRules from "../searchRules.js";
 
 import type {
   ApiFromModules,
@@ -28,6 +30,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   enrichmentValidators: typeof enrichmentValidators;
+  founderSearches: typeof founderSearches;
   founders: typeof founders;
   http: typeof http;
   "lib/enrichment": typeof lib_enrichment;
@@ -38,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   operatorMaintenance: typeof operatorMaintenance;
   operatorRiskSearch: typeof operatorRiskSearch;
   operatorRiskStore: typeof operatorRiskStore;
+  searchRules: typeof searchRules;
 }>;
 
 /**

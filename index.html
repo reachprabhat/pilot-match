@@ -24,9 +24,10 @@
         <label for="pilot-ask">What would you like to pilot, and with which companies?</label>
         <textarea id="pilot-ask" rows="7" autocomplete="off" aria-describedby="matching-note" placeholder="For example: We have an AI-enabled supply chain &amp; manufacturing decision intelligence tool that identifies supply chain/production bottlenecks across industries. Looking for a 6–8 week pilot with ₹100 Cr+ companies, ideally contract manufacturers, retail or industrial products."></textarea>
         <div class="search-actions">
-          <p id="matching-note">Matching opens soon</p>
-          <button class="primary" type="button" disabled aria-describedby="matching-note">Search</button>
+          <p id="matching-note" role="status">Matching opens soon</p>
+          <button id="search" class="primary" type="button" disabled aria-describedby="matching-note search-message">Search</button>
         </div>
+        <p id="search-message" role="status" hidden></p>
       </section>
       <section id="link-state" class="panel" aria-labelledby="link-title" hidden>
         <h1 id="link-title" tabindex="-1">Opening your personal link</h1>

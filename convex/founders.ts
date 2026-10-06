@@ -1,5 +1,6 @@
 import { internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
+import { searchState, searchStateValidator } from "./searchRules";
 
 export const setPersonalLink = internalMutation({
   args:{founderId:v.string(),linkHash:v.string()},returns:v.null(),
@@ -16,10 +17,10 @@ export const setPersonalLink = internalMutation({
 });
 
 export const resolvePersonalLink = internalQuery({
-  args:{linkHash:v.string()},returns:v.union(v.null(),v.object({company:v.string()})),
+  args:{linkHash:v.string()},returns:v.union(v.null(),v.object({company:v.string(),...searchStateValidator.fields})),
   handler:async(ctx,args)=>{
     if(!/^[a-f0-9]{64}$/.test(args.linkHash))return null;
     const founder=await ctx.db.query("founders").withIndex("by_link_hash",q=>q.eq("linkHash",args.linkHash)).unique();
-    return founder?{company:founder.company}:null;
+    return founder?{company:founder.company,...searchState(founder.searchCount)}:null;
   },
 });

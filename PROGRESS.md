@@ -110,3 +110,35 @@
 - Both production links passed live browser checks at desktop, 390px phone and 320px small phone. Correct company, disabled Search, no saved ask, no typing requests, invalid-link handling and offline retry all pass. Inspected the live phone screen. No AI, search or WhatsApp call was made.
 - Milestone 3 is complete; milestone 4 is next. Owner edits in AGENTS.md and PRODUCT.md remain untouched.
 
+## Milestones 4 and 11 - checked in dev; awaiting owner phone review
+
+- First committed and pushed only the owner's AGENTS.md and PRODUCT.md edits as 5fa55a8, without deploying.
+- Owner approved combining milestones 4 and 11 with a limit of three per founder, then requested an owner-run reset and no charge for failed searches.
+- Each founder's optional searchCount lives in Convex; existing founders start at zero. SEARCH_LIMIT in convex/searchRules.ts is set to 3. Personal-link lookup returns company and count information only; no names, phones, profiles or database IDs.
+- This milestone saves submitted pilot asks, not AI results. Matching belongs to milestone 5. The page says "Your ask is saved. Matching opens soon." after a successful save. When matching is connected, count only completed matching results; failed AI calls must not consume a search.
+- Saving an ask and increasing the count happen in one Convex mutation: both succeed or neither does. Empty, overlong, invalid-link and failed-save requests cost zero. The founderSearches table stores asks and request IDs with a founder/request index. A request ID prevents a retry from charging twice, including when the response is lost after Convex successfully saves the ask. A transport error does not undo a successful database save; retrying the same ask in the same page retrieves the saved attempt.
+- Personal links show remaining searches. Empty asks and asks over 300 words or 12,000 characters cannot be submitted. Search disables while saving and after the third save, with "You've used all 3 searches." Reloading and reopening retain the count. Returning to a tab refreshes it without clearing typed input. The generic landing-page ask remains disabled.
+- Owner-only founderSearches:reset accepts the founderId field (not the Convex _id) and sets only that founder's searchCount to 0. It preserves asks, profiles and personal links. There is no public reset endpoint. Refresh the founder page after resetting.
+- How to reset yourself: open https://dashboard.convex.dev/t/reachprabhat-iitr/build-sprint-app/neat-hyena-46, select Functions, choose founderSearches:reset, enter {"founderId":"YOUR_FOUNDER_ID"} with the ID copied from Data > founders > founderId, then Run. The reply shows searchCount 0 and searchesRemaining 3. For the live app after shipping, select the production deployment before running the same function.
+- Saved rule/access checks pass: three successful saves per founder, validation and database failures cost zero, retries cost once, independent founders, private responses and owner-only reset. Existing enrichment, PDF, risks, dash and build-cache checks pass; TypeScript and the development Convex push pass.
+- Hosted browser checks on Chrome at 1280px desktop, 390px phone and 320px small phone pass: three saves, disabled button/message, double-click protection, remembered count after reload, reset restoring three, independent founder and generic-link behavior, no overflow or browser storage. Eight simultaneous real Convex requests allow exactly three and reject five. An injected 503 response leaves the count unchanged and shows the required busy message. Screenshots inspected; the design detector only flags Inter and the warm palette required by DESIGN.md.
+- Tests used two disposable fictional founders in development. Both founders, their saved asks and temporary verification helpers were removed afterward. Real founders were not searched or reset. No AI or WhatsApp request ran.
+- Phone check: use an existing personal link, replacing its origin with https://neat-hyena-46.convex.site while keeping the #f= code. Enter and submit three asks; check remaining counts 2, 1 and 0, the disabled Search button and clear limit message. Reload to confirm the limit persists. Use the reset above, refresh, and confirm three searches are available again.
+- Development backend and static files are published for review. Production remains unchanged. Commit, push and npm run deploy follow owner confirmation that the milestone works.
+
+## Reset follow-up - sheet ID verified in development
+
+- Owner reported Founder not found when supplying Convex _id and explicitly authorised testing the reset on founder 1.
+- Actual cause: reset queries founders.by_founder_id against the sheet's founderId string; the supplied Convex _id belongs to a different field. Development contains the sheet IDs "1" and "2". Simple sheet IDs were already supported; no import or ID migration was needed.
+- Reset now trims surrounding whitespace and gives an actionable error: use the founderId from the sheet, such as "1" or "2", not Convex _id, and check the selected deployment. Added regression checks for wrong IDs, whitespace, both fictional sheet IDs and preservation of the other founder.
+- TypeScript, saved search-limit and founder-access checks pass, and the updated backend was pushed successfully to development neat-hyena-46.
+- Reproduced the wrong-_id error on the real development row without changing it, then ran founderSearches:reset with {"founderId":"1"}. Count changed from 3 to 0; reply was {"searchCount":0,"searchLimit":3,"searchesRemaining":3}. Database comparisons confirm founder 1's other fields, saved asks and the entire founder 2 row were unchanged.
+- Exact dashboard steps: select development neat-hyena-46, Functions > founderSearches:reset, enter {"founderId":"1"}, then Run. For founder 2, use {"founderId":"2"}. Keep the numbers in quotes. Refresh the founder's personal page afterward.
+- No production change, AI call, WhatsApp action, additional search, GitHub push or milestone shipping approval occurred.
+
+## Milestones 4 and 11 - owner approved shipping
+
+- Owner confirmed milestone 4 works and authorised commit, push and deployment of the combined search-limit milestone, including milestone 11 and the sheet-ID reset.
+- Marked milestones 4 and 11 complete; milestone 5 (AI matching) is next. Searches currently save asks, and the page continues to say matching opens soon.
+- Pre-shipping checks passed: search quotas/reset, founder access, enrichment, risks-only, PDF evidence, dash repair, build cache and Convex TypeScript.
+
