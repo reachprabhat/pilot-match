@@ -1,16 +1,18 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),esbuild=require('esbuild');
 const validator=new Proxy(()=>validator,{get:()=>validator});
-const context={module:{exports:{}},require:n=>n==='./_generated/server'?{internalQuery:x=>x,internalMutation:x=>x}:n==='./choiceValidators'?{choiceStatusValidator:validator}:n==='./matchingValidators'?{matchValidator:{fields:{}}}:{v:validator}};
+const opportunity={module:{exports:{}}};vm.runInNewContext(esbuild.transformSync(fs.readFileSync('convex/lib/opportunity.ts','utf8'),{loader:'ts',format:'cjs'}).code,opportunity);
+const meeting={module:{exports:{}}};vm.runInNewContext(esbuild.transformSync(fs.readFileSync('convex/lib/meetingResponses.ts','utf8'),{loader:'ts',format:'cjs'}).code,meeting);
+const context={module:{exports:{}},require:n=>n==='./_generated/server'?{internalQuery:x=>x,internalMutation:x=>x}:n==='./lib/opportunity'?opportunity.module.exports:n==='./lib/meetingResponses'?meeting.module.exports:n==='./responseValidators'?{founderResponseValidator:validator}:n==='./choiceValidators'?{choiceStatusValidator:validator}:n==='./matchingValidators'?{matchValidator:{fields:{}}}:{v:validator}};
 vm.runInNewContext(esbuild.transformSync(fs.readFileSync('convex/choices.ts','utf8'),{loader:'ts',format:'cjs'}).code,context);
 const {save,latest}=context.module.exports;
 const founders=[{_id:'fictional-founder-1',linkHash:'a'.repeat(64)},{_id:'fictional-founder-2',linkHash:'b'.repeat(64)}];
-const searches=[{founderId:founders[0]._id,status:'completed',ask:'A fictional manufacturing pilot',matches:[{operatorId:'example-one',score:90,why:'Example fit'},{operatorId:'example-two',score:80,why:'Example fit'}]}];
-const choices=[];const tables={founders,founderSearches:searches,founderChoices:choices};
+const searches=[{_id:'fictional-search',founderId:founders[0]._id,status:'completed',ask:'A fictional manufacturing pilot',matches:[{operatorId:'example-one',score:90,why:'Example fit'},{operatorId:'example-two',score:80,why:'Example fit'}]}];
+const choices=[],requests=[];const tables={founders,founderSearches:searches,founderChoices:choices,operatorRequests:requests,operatorResponses:[]};
 const db={query:table=>({withIndex:(index,callback)=>{
   const conditions=[];const q={eq:(key,value)=>{conditions.push([key,value]);return q;}};callback(q);
   const rows=()=>tables[table].filter(row=>conditions.every(([key,value])=>row[key]===value));
   const result={unique:async()=>rows()[0]??null,first:async()=>rows().at(-1)??null,order:()=>result};return result;
-}}),insert:async(table,row)=>{assert.equal(table,'founderChoices');choices.push({...row,_id:'choice-'+choices.length});},patch:async(id,fields)=>{const row=choices.find(row=>row._id===id);assert.ok(row,'only choice rows may be changed');Object.assign(row,fields);}};
+}}),insert:async(table,row)=>{assert.ok(['founderChoices','operatorRequests'].includes(table));tables[table].push({...row,_id:table+'-'+tables[table].length});},patch:async(id,fields)=>{const row=[...choices,...requests].find(row=>row._id===id);assert.ok(row,'only choices and request snapshots may be changed');Object.assign(row,fields);}};
 (async()=>{
  const baseline=JSON.stringify({founders,searches});
  for(const status of ['Requested','Parked','Rejected']){

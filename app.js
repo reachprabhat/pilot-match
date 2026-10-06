@@ -76,11 +76,13 @@ function showMatches(matches, focus = true) {
     status.className = 'choice-status';
     status.setAttribute('role', 'status');
     let savedChoice = match.choice || '';
+    let savedResponse = match.response || '';
+    const displayChoice = () => savedChoice === 'Requested' && savedResponse ? savedResponse : savedChoice;
     let saving = false;
     const buttons = [];
     const updateChoice = () => {
       status.classList.remove('error');
-      status.textContent = savedChoice;
+      status.textContent = displayChoice();
       for (const button of buttons) button.setAttribute('aria-pressed', String(button.dataset.status === savedChoice));
     };
     for (const [label, value] of [['Request to meet', 'Requested'], ['Park', 'Parked'], ['Reject', 'Rejected']]) {
@@ -112,10 +114,11 @@ function showMatches(matches, focus = true) {
             throw new Error('Could not confirm your choice. Try again or reload.');
           }
           savedChoice = result.status;
+          savedResponse = result.response || '';
           updateChoice();
         } catch (error) {
           if (personalCode !== code || searchVersion !== version || !card.isConnected) return;
-          status.textContent = `${savedChoice ? savedChoice + '. ' : ''}${error.message === 'Reload to choose from your latest matches.' ? error.message : 'Could not confirm your choice. Try again or reload.'}`;
+          status.textContent = `${displayChoice() ? displayChoice() + '. ' : ''}${error.message === 'Reload to choose from your latest matches.' ? error.message : 'Could not confirm your choice. Try again or reload.'}`;
           status.classList.add('error');
         } finally {
           saving = false;

@@ -17,15 +17,21 @@ import type * as http from "../http.js";
 import type * as lib_enrichment from "../lib/enrichment.js";
 import type * as lib_evidenceSource from "../lib/evidenceSource.js";
 import type * as lib_matching from "../lib/matching.js";
+import type * as lib_meetingResponses from "../lib/meetingResponses.js";
+import type * as lib_opportunity from "../lib/opportunity.js";
 import type * as lib_repairDash from "../lib/repairDash.js";
 import type * as matching from "../matching.js";
 import type * as matchingStore from "../matchingStore.js";
 import type * as matchingValidators from "../matchingValidators.js";
 import type * as operatorEnrichment from "../operatorEnrichment.js";
 import type * as operatorEnrichmentStore from "../operatorEnrichmentStore.js";
+import type * as operatorLinks from "../operatorLinks.js";
 import type * as operatorMaintenance from "../operatorMaintenance.js";
+import type * as operatorRequests from "../operatorRequests.js";
+import type * as operatorResponses from "../operatorResponses.js";
 import type * as operatorRiskSearch from "../operatorRiskSearch.js";
 import type * as operatorRiskStore from "../operatorRiskStore.js";
+import type * as responseValidators from "../responseValidators.js";
 import type * as searchRules from "../searchRules.js";
 
 import type {
@@ -44,15 +50,21 @@ declare const fullApi: ApiFromModules<{
   "lib/enrichment": typeof lib_enrichment;
   "lib/evidenceSource": typeof lib_evidenceSource;
   "lib/matching": typeof lib_matching;
+  "lib/meetingResponses": typeof lib_meetingResponses;
+  "lib/opportunity": typeof lib_opportunity;
   "lib/repairDash": typeof lib_repairDash;
   matching: typeof matching;
   matchingStore: typeof matchingStore;
   matchingValidators: typeof matchingValidators;
   operatorEnrichment: typeof operatorEnrichment;
   operatorEnrichmentStore: typeof operatorEnrichmentStore;
+  operatorLinks: typeof operatorLinks;
   operatorMaintenance: typeof operatorMaintenance;
+  operatorRequests: typeof operatorRequests;
+  operatorResponses: typeof operatorResponses;
   operatorRiskSearch: typeof operatorRiskSearch;
   operatorRiskStore: typeof operatorRiskStore;
+  responseValidators: typeof responseValidators;
   searchRules: typeof searchRules;
 }>;
 
