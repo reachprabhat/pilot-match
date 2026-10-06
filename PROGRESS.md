@@ -8,6 +8,13 @@
 - Real dev founder 1: two action repeats and two phone Search-button repeats return the first saved result exactly. Search count remains 1, saved-search rows 11, matching AI-call rows 7. Protected table digests remain identical, excluding only the intended active-search reference. Chrome at 390px confirms identical cards, reload, no overflow and no browser errors; existing fictional browser checks pass at desktop/390px/320px.
 - Raw before/after proof and private phone captures are outside the repo under the local Temp saved-result-proof folder. Production baseline saved read-only before shipping: founder 1 count 1, saved-search rows 4, matching AI-call rows 4. Next: deploy and verify the production lookup and phone flow without paid searches.
 
+## Repeat founder asks - production verified
+
+- Saved/pushed code checkpoint 1f50b03, then deployed with npm run deploy; production static deployment 83c5cf87-4802-4bb1-a6f8-20c07c7afd4f. The first noninteractive deploy stopped at Convex's confirmation prompt; reran in an interactive terminal and confirmed the already authorised deployment successfully.
+- Real production founder 1: two action repeats and two live 390px Search-button repeats reuse production's earliest completed result exactly, including both explanations. Production and dev contain separate historical asks/results; neither was copied to the other. Count stays 1, saved-search rows 4, matching AI-call rows 4. Protected table digests match the pre-deploy baseline, excluding only the intended active-search reference; no profile, link, saved-search, choice, response or AI-call data changes.
+- Live phone browser proves identical operators/scores/explanations after both repeats and full reload, with no overflow or browser errors. Dev founder-link checks also passed for both founders at desktop/390px/320px, link switching and offline retry after supplying their actual remaining counts to the check harness.
+- Full raw proof and captures remain outside the repo in Temp/saved-result-proof. Phone check: open the existing founder personal link, submit the exact saved ask twice, check the same cards and unchanged remaining count, then reload Results. Next: owner phone check; no new AI calls or paid searches needed.
+
 ## Milestone 0 — approved, published and checked live
 
 - Built the landing page with DESIGN.md's exact headline, supporting text and founder button.
