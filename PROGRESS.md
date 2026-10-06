@@ -1,5 +1,13 @@
 # PROGRESS.md
 
+## Repeat founder asks - dev verified, production shipping authorised
+
+- Owner approved reusing the earliest completed result for the same founder and exact trimmed ask, dev proof, then production deployment. Added an indexed lookup before quota/AI reservation. Repeat asks reuse saved operators, scores and explanations without another AI call, search row or count increment, including across quota resets. New asks retain existing quota and one-in-flight rules.
+- Added an optional active saved-search reference so the founder screen restores the reopened result and meeting choices use its original saved opportunity. Historical searches, choices and operator responses are preserved; existing founders without the reference keep the latest-result fallback. No UI changes, model changes or real data added to Git.
+- Test first reproduced the bug. Saved checks now cover fresh request IDs, identical explanations/scores/operators, earliest result among duplicates, quota and hourly caps, resets, founder isolation, request-ID mismatch, reload and meeting selection. Matching, quota, choices, operator response/request, admin, founder access, build-cache and Convex TypeScript checks pass. Dev backend pushed successfully.
+- Real dev founder 1: two action repeats and two phone Search-button repeats return the first saved result exactly. Search count remains 1, saved-search rows 11, matching AI-call rows 7. Protected table digests remain identical, excluding only the intended active-search reference. Chrome at 390px confirms identical cards, reload, no overflow and no browser errors; existing fictional browser checks pass at desktop/390px/320px.
+- Raw before/after proof and private phone captures are outside the repo under the local Temp saved-result-proof folder. Production baseline saved read-only before shipping: founder 1 count 1, saved-search rows 4, matching AI-call rows 4. Next: deploy and verify the production lookup and phone flow without paid searches.
+
 ## Milestone 0 — approved, published and checked live
 
 - Built the landing page with DESIGN.md's exact headline, supporting text and founder button.

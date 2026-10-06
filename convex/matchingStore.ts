@@ -15,6 +15,13 @@ export const reserve=internalMutation({
     if(!founder)return {status:"invalid_link" as const};
     const state=searchState(founder.searchCount);
     const existing=await ctx.db.query("founderSearches").withIndex("by_founder_request",q=>q.eq("founderId",founder._id).eq("requestId",args.requestId)).unique();
+    if(existing && existing.ask!==ask)return {status:"invalid_ask" as const};
+    // Pin repeat asks to their first completed result, across quota resets.
+    const saved=await ctx.db.query("founderSearches").withIndex("by_founder_ask_status",q=>q.eq("founderId",founder._id).eq("ask",ask).eq("status","completed")).order("asc").first();
+    if(saved?.matches){
+      if(founder.activeSearchId!==saved._id)await ctx.db.patch(founder._id,{activeSearchId:saved._id});
+      return {status:"matched" as const,matches:saved.matches,...state};
+    }
     if(existing) {
       if(existing.ask!==ask)return {status:"invalid_ask" as const};
       if(existing.status==="completed" && existing.matches)return {status:"matched" as const,matches:existing.matches,...state};
@@ -58,7 +65,7 @@ export const complete=internalMutation({
     if(state.searchCount>=SEARCH_LIMIT)return {status:"limit_reached" as const,...state};
     if(args.matches.length!==2 || new Set(args.matches.map(match=>match.operatorId)).size!==2 || args.matches.some(match=>!Number.isInteger(match.score)||match.score<0||match.score>100))throw Error("Invalid matches");
     await ctx.db.patch(search._id,{status:"completed",matches:args.matches,responseId:args.responseId});
-    await ctx.db.patch(founder._id,{searchCount:state.searchCount+1});
+    await ctx.db.patch(founder._id,{searchCount:state.searchCount+1,activeSearchId:search._id});
     return {status:"matched" as const,matches:args.matches,...searchState(state.searchCount+1)};
   },
 });

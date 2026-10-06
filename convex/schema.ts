@@ -20,13 +20,13 @@ export default defineSchema({
     founderId:v.string(), name:v.string(), whatsappNumber:v.string(),
     headline:v.string(),company:v.string(),currentRole:v.string(),location:v.string(),
     about:v.string(),industry:v.string(),pilotDone:v.string(),topFeatures:v.string(),productType:v.optional(v.string()),
-    freeTextSearches:v.string(),linkHash:v.optional(v.string()),searchCount:v.optional(v.number()),searchResetVersion:v.optional(v.number()),
+    freeTextSearches:v.string(),linkHash:v.optional(v.string()),searchCount:v.optional(v.number()),searchResetVersion:v.optional(v.number()),activeSearchId:v.optional(v.id("founderSearches")),
   }).index("by_founder_id",["founderId"]).index("by_link_hash",["linkHash"]),
   founderSearches: defineTable({
     founderId: v.id("founders"), requestId: v.string(), ask: v.string(), savedAt: v.number(),
     status:v.optional(v.union(v.literal("running"),v.literal("completed"),v.literal("failed"))),
     matches:v.optional(v.array(matchValidator)),runId:v.optional(v.id("aiCalls")),resetVersion:v.optional(v.number()),responseId:v.optional(v.string()),
-  }).index("by_founder_request", ["founderId", "requestId"]).index("by_founder_status",["founderId","status"]).index("by_founder_status_saved_at",["founderId","status","savedAt"]),
+  }).index("by_founder_request", ["founderId", "requestId"]).index("by_founder_status",["founderId","status"]).index("by_founder_status_saved_at",["founderId","status","savedAt"]).index("by_founder_ask_status",["founderId","ask","status"]),
   operators: defineTable({
     operatorId: v.string(),
     name: v.string(),

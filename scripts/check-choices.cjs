@@ -8,7 +8,7 @@ const {save,latest}=context.module.exports;
 const founders=[{_id:'fictional-founder-1',linkHash:'a'.repeat(64)},{_id:'fictional-founder-2',linkHash:'b'.repeat(64)}];
 const searches=[{_id:'fictional-search',founderId:founders[0]._id,status:'completed',ask:'A fictional manufacturing pilot',matches:[{operatorId:'example-one',score:90,why:'Example fit'},{operatorId:'example-two',score:80,why:'Example fit'}]}];
 const choices=[],requests=[];const tables={founders,founderSearches:searches,founderChoices:choices,operatorRequests:requests,operatorResponses:[]};
-const db={query:table=>({withIndex:(index,callback)=>{
+const db={get:async id=>Object.values(tables).flat().find(row=>row._id===id)??null,query:table=>({withIndex:(index,callback)=>{
   const conditions=[];const q={eq:(key,value)=>{conditions.push([key,value]);return q;}};callback(q);
   const rows=()=>tables[table].filter(row=>conditions.every(([key,value])=>row[key]===value));
   const result={unique:async()=>rows()[0]??null,first:async()=>rows().at(-1)??null,order:()=>result};return result;
@@ -29,5 +29,13 @@ const db={query:table=>({withIndex:(index,callback)=>{
  assert.equal(await latest.handler({db},{linkHash:'unknown'}),null);
  assert.equal((await latest.handler({db},{linkHash:founders[0].linkHash})).ask,'A fictional manufacturing pilot');
  assert.deepEqual(JSON.parse(JSON.stringify(await latest.handler({db},{linkHash:founders[1].linkHash}))),{ask:'',matches:[]});
+ searches.push({...searches[0],_id:'fictional-newer-search',ask:'A different pilot',matches:[{operatorId:'other-operator',score:70,why:'Different fit'}]});
+ founders[0].activeSearchId=searches[0]._id;
+ assert.equal((await latest.handler({db},{linkHash:founders[0].linkHash})).ask,searches[0].ask,'reload restores reopened saved result');
+ assert.equal((await save.handler({db},{linkHash:founders[0].linkHash,operatorId:'example-one',status:'Requested'})).status,'Requested','request uses reopened saved match');
+ assert.equal(requests.find(r=>r.operatorId==='example-one').searchId,searches[0]._id);
+ assert.equal((await save.handler({db},{linkHash:founders[0].linkHash,operatorId:'other-operator',status:'Requested'})).error,'invalid_match');
+ founders[0].activeSearchId='missing-search';
+ assert.equal((await latest.handler({db},{linkHash:founders[0].linkHash})).ask,'A different pilot','invalid pointers safely fall back');
  console.log('Choice checks passed: all three statuses reload, one row per founder/operator, other founders and unmatched operators blocked, no search or matching writes.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
