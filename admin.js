@@ -1,7 +1,7 @@
 const panel=document.querySelector('.panel'),heading=document.getElementById('admin-title');
 const message=document.getElementById('admin-message'),content=document.getElementById('admin-content');
 const refresh=document.getElementById('admin-refresh'),more=document.getElementById('admin-more');
-const lists={Requested:document.getElementById('new-list'),Accepted:document.getElementById('accepted-list')};
+const lists={Requested:document.getElementById('new-list'),Accepted:document.getElementById('accepted-list'),Declined:document.getElementById('declined-list')};
 let code,cursor=null,loading=false,version=0,controller;
 const shown=new Set();
 function showMessage(text,error=false){message.textContent=text;message.hidden=!text;message.classList.toggle('error',error);}
@@ -12,6 +12,11 @@ function addCard(request){
   const title=document.createElement('h3');title.textContent=`Founder ${request.founderId} / Operator ${request.operatorId}`;article.append(title);
   const contacts=document.createElement('dl');
   const contact=(label,value)=>{const term=document.createElement('dt'),detail=document.createElement('dd');term.textContent=label;detail.textContent=value||'Not provided';contacts.append(term,detail);};
+  if(request.status==='Declined'){
+    contact('Founder',request.founderName);contact('Operator',request.operatorName);
+    contact('Requested',new Date(request.requestedAt).toLocaleString());contact('Declined',new Date(request.declinedAt).toLocaleString());
+    article.append(contacts);lists.Declined.append(article);shown.add(request.requestId);return;
+  }
   contact('Status',request.status);contact('Requested',new Date(request.requestedAt).toLocaleString());
   contact('Operator',request.operatorName);contact('Operator WhatsApp',request.operatorPhone);
   if(request.status==='Accepted'){contact('Founder',request.founderName);contact('Founder WhatsApp',request.founderPhone);}
@@ -39,6 +44,7 @@ async function load(){
     cursor=result.continueCursor;content.hidden=false;more.hidden=result.isDone;
     document.getElementById('new-empty').hidden=lists.Requested.childElementCount>0;
     document.getElementById('accepted-empty').hidden=lists.Accepted.childElementCount>0;
+    document.getElementById('declined-empty').hidden=lists.Declined.childElementCount>0;
     refresh.hidden=false;refresh.textContent='Refresh requests';showMessage('');
   }catch{
     if(requestVersion!==version)return;
