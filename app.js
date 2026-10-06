@@ -16,6 +16,32 @@ let remaining = 0;
 let searchLimit = 3;
 let submitting;
 let pendingRequest;
+const matchesSection = document.getElementById('matches');
+const matchCards = document.getElementById('match-cards');
+let searchVersion = 0;
+
+function clearMatches() {matchesSection.hidden = true; matchCards.replaceChildren();}
+function showMatches(matches) {
+  if (!Array.isArray(matches) || matches.length !== 2 || new Set(matches.map(match => match.operatorId)).size !== 2 ||
+      matches.some(match => typeof match.operatorId !== 'string' || !Number.isInteger(match.score) || match.score < 0 || match.score > 100 || typeof match.why !== 'string' || !match.why))
+    throw new Error('Invalid matches');
+  matchCards.replaceChildren();
+  for (const match of matches) {
+    const card = document.createElement('article');
+    const title = document.createElement('h2');
+    const score = document.createElement('p');
+    const reason = document.createElement('p');
+    title.textContent = `Operator ${match.operatorId}`;
+    score.className = 'fit-score';
+    score.textContent = `${match.score}/100`;
+    score.setAttribute('aria-label', `Fit score ${match.score} out of 100`);
+    reason.textContent = match.why.replace(/\bSCM\b/g, 'supply chain management');
+    card.append(title, score, reason);
+    matchCards.append(card);
+  }
+  matchesSection.hidden = false;
+  document.getElementById('matches-title').focus();
+}
 
 function showSearchMessage(message, error = false) {
   searchMessage.textContent = message;
@@ -26,7 +52,7 @@ function showSearchMessage(message, error = false) {
 function updateSearchButton() {
   const words = pilotAsk.value.trim().split(/\s+/u).filter(Boolean).length;
   searchButton.disabled = !personalCode || remaining === 0 || !!submitting || words === 0 || words > 300 || pilotAsk.value.length > 12000;
-  searchButton.textContent = submitting ? 'Saving your ask...' : 'Search';
+  searchButton.textContent = submitting ? 'Searching...' : 'Search';
   matchingNote.textContent = !personalCode ? 'Matching opens soon'
     : remaining === 0 ? `You’ve used all ${searchLimit} searches.`
     : `${remaining} ${remaining === 1 ? 'search' : 'searches'} remaining. Maximum 300 words.`;
@@ -42,6 +68,8 @@ function applySearchState(state) {
 }
 
 async function openPersonalLink() {
+  searchVersion++;
+  clearMatches();
   submitting?.abort();
   submitting = undefined;
   personalCode = undefined;
@@ -113,6 +141,8 @@ openAsk.addEventListener('click', () => {
 });
 
 document.getElementById('back').addEventListener('click', () => {
+  searchVersion++;
+  clearMatches();
   submitting?.abort();
   submitting = undefined;
   personalCode = undefined;
@@ -142,6 +172,8 @@ pilotAsk.addEventListener('input', () => {
 
 searchButton.addEventListener('click', async () => {
   if (searchButton.disabled) return;
+  searchVersion++;
+  clearMatches();
   const code = personalCode;
   const text = pilotAsk.value.trim();
   if (!pendingRequest || pendingRequest.code !== code || pendingRequest.ask !== text)
@@ -149,8 +181,8 @@ searchButton.addEventListener('click', async () => {
   const controller = new AbortController();
   submitting = controller;
   updateSearchButton();
-  showSearchMessage('');
-  const timeout = setTimeout(() => controller.abort(), 15000);
+  showSearchMessage('Looking for the best operators...');
+  const timeout = setTimeout(() => controller.abort(), 70000);
   try {
     const response = await fetch('/api/search', {
       method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(pendingRequest),
@@ -166,13 +198,14 @@ searchButton.addEventListener('click', async () => {
       showSearchMessage('Enter your pilot ask in 300 words or fewer.', true);
       return;
     }
-    if (!response.ok && response.status !== 429) throw new Error('Search failed');
+    if (!response.ok && response.status !== 429) {pendingRequest = undefined; throw new Error('Search failed');}
     const result = await response.json();
     if (submitting !== controller) return;
-    if (result.status !== 'saved' && result.status !== 'limit_reached') throw new Error('Invalid reply');
+    if (result.status !== 'matched' && result.status !== 'limit_reached') throw new Error('Invalid reply');
+    if (result.status === 'matched') showMatches(result.matches);
     applySearchState(result);
     pendingRequest = undefined;
-    showSearchMessage(result.status === 'saved' ? 'Your ask is saved. Matching opens soon.' : '');
+    showSearchMessage('');
   } catch {
     if (submitting === controller) showSearchMessage('Busy right now. Try again in a few minutes.', true);
   } finally {
@@ -185,6 +218,7 @@ searchButton.addEventListener('click', async () => {
 async function refreshSearchCount() {
   if (!personalCode || submitting) return;
   const code = personalCode;
+  const version = searchVersion;
   try {
     const response = await fetch('/api/founder', {
       method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({code}),
@@ -192,7 +226,7 @@ async function refreshSearchCount() {
     });
     if (!response.ok) return;
     const state = await response.json();
-    if (personalCode === code && !submitting) applySearchState(state);
+    if (personalCode === code && !submitting && searchVersion === version) applySearchState(state);
   } catch { /* Keep the last known count; Convex still enforces the limit. */ }
 }
 window.addEventListener('focus', refreshSearchCount);

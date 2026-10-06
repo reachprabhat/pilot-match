@@ -1,17 +1,20 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { enrichmentValidator } from "./enrichmentValidators";
+import {matchValidator} from "./matchingValidators";
 
 export default defineSchema({
   founders: defineTable({
     founderId:v.string(), name:v.string(), whatsappNumber:v.string(),
     headline:v.string(),company:v.string(),currentRole:v.string(),location:v.string(),
     about:v.string(),industry:v.string(),pilotDone:v.string(),topFeatures:v.string(),
-    freeTextSearches:v.string(),linkHash:v.optional(v.string()),searchCount:v.optional(v.number()),
+    freeTextSearches:v.string(),linkHash:v.optional(v.string()),searchCount:v.optional(v.number()),searchResetVersion:v.optional(v.number()),
   }).index("by_founder_id",["founderId"]).index("by_link_hash",["linkHash"]),
   founderSearches: defineTable({
     founderId: v.id("founders"), requestId: v.string(), ask: v.string(), savedAt: v.number(),
-  }).index("by_founder_request", ["founderId", "requestId"]),
+    status:v.optional(v.union(v.literal("running"),v.literal("completed"),v.literal("failed"))),
+    matches:v.optional(v.array(matchValidator)),runId:v.optional(v.id("aiCalls")),resetVersion:v.optional(v.number()),responseId:v.optional(v.string()),
+  }).index("by_founder_request", ["founderId", "requestId"]).index("by_founder_status",["founderId","status"]),
   operators: defineTable({
     operatorId: v.string(),
     name: v.string(),
@@ -31,8 +34,8 @@ export default defineSchema({
     riskSearch: v.optional(enrichmentValidator),
   }).index("by_operator_id", ["operatorId"]),
   aiCalls: defineTable({
-    operatorId: v.string(),
+    operatorId: v.optional(v.string()),founderId:v.optional(v.id("founders")),
     startedAt: v.number(),
-    purpose: v.literal("operator_enrichment"),
+    purpose: v.union(v.literal("operator_enrichment"),v.literal("founder_matching")),
   }).index("by_started_at", ["startedAt"]),
 });

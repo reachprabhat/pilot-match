@@ -7,7 +7,7 @@
 - Milestone 2 — complete: As product owner, enrich each operator with company revenue, industry and stated problems once at load time.
 - Milestone 3 - complete: As product owner, load founder profiles including WhatsApp contact numbers and generate a personal link for each founder.
 - Milestone 4 - complete: As product owner, control the maximum searches allowed per founder (N) to control AI usage.
-- Milestone 5 - next: As a founder, enter a pilot ask and see the best matching operators.
+- Milestone 5 - complete: As a founder, enter a pilot ask and see the best matching operators.
 - Milestone 6: As a founder, see fitment scores and explanations and choose "Request to meet", "Park" or "Reject".
 - Milestone 7: As a founder, request a meeting, see the request marked "In progress", and have the selected operator receive a notification with the business opportunity card.
 - Milestone 8: As an operator, view the business opportunity card and choose "Interested" or "Not Relevant".

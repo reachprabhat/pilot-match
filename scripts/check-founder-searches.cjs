@@ -1,113 +1,73 @@
-// Run only against two disposable fictional founders. Never use real founder links here.
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const os = require('node:os');
-const path = require('node:path');
-const {execFileSync} = require('node:child_process');
-const base = 'https://neat-hyena-46.convex.site';
-const codes = ['a'.repeat(43), 'b'.repeat(43)];
-const cli = (fn, args) => JSON.parse(execFileSync(process.execPath, ['node_modules/convex/bin/main.js', 'run', fn, JSON.stringify(args)], {encoding: 'utf8'}));
-const reset = (suffix = 'a') => cli('founderSearches:reset', {founderId: 'quota-check-fictional-' + suffix});
-const post = async (route, body) => {
-  const response = await fetch(base + '/api/' + route, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
-  return {status: response.status, body: await response.json()};
-};
-(async () => {
-  for (const code of codes) assert.equal((await post('founder', {code})).body.company, 'Fictional Test Company', 'Only disposable fictional founders may be tested');
-  reset(); reset('b');
-  const invalid = await post('search', {code: codes[0], ask: 'word '.repeat(301), requestId: crypto.randomUUID()});
-  assert.equal(invalid.status, 400);
-  assert.equal((await post('founder', {code: codes[0]})).body.searchCount, 0);
-  const requests = await Promise.all(Array.from({length: 8}, () => post('search', {code: codes[0], ask: 'A fictional pilot for testing simultaneous requests', requestId: crypto.randomUUID()})));
-  assert.equal(requests.filter(r => r.status === 200).length, 3);
-  assert.equal(requests.filter(r => r.status === 429).length, 5);
-  assert.equal((await post('founder', {code: codes[1]})).body.searchCount, 0);
-  reset();
-  const retry = {code: codes[0], ask: 'A fictional retry test', requestId: crypto.randomUUID()};
-  assert.equal((await post('search', retry)).body.searchCount, 1);
-  assert.equal((await post('search', retry)).body.searchCount, 1);
-  reset();
-  const tabs = await (await fetch('http://127.0.0.1:9222/json')).json();
-  const ws = new WebSocket(tabs.find(tab => tab.type === 'page').webSocketDebuggerUrl);
-  await new Promise(resolve => ws.addEventListener('open', resolve, {once: true}));
-  let id = 0;
-  const pending = new Map(), errors = [];
-  ws.addEventListener('message', ({data}) => {
-    const m = JSON.parse(data);
-    if (m.id) {const p = pending.get(m.id); pending.delete(m.id); m.error ? p.reject(m.error) : p.resolve(m.result);}
-    if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails.text);
+// Browser contract checks use fictional replies. Backend rules and the action are checked separately.
+// No OpenAI calls, private links, production writes or paid searches occur in this check.
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),os=require('node:os');
+const base='https://neat-hyena-46.convex.site';
+(async()=>{
+  const tabs=await(await fetch('http://127.0.0.1:9222/json')).json();
+  const ws=new WebSocket(tabs.find(tab=>tab.type==='page').webSocketDebuggerUrl);
+  await new Promise(resolve=>ws.addEventListener('open',resolve,{once:true}));
+  let id=0,count=0,failNext=false,searchRequests=0;
+  const pending=new Map(),errors=[],requestIds=[];
+  const matches=[{operatorId:'example-one',score:93,why:'Manufacturing leadership fits the bottleneck pilot.'},{operatorId:'example-two',score:85,why:'Retail operations experience supports a pilot.'}];
+  const send=(method,params={})=>new Promise((resolve,reject)=>{pending.set(++id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
+  ws.addEventListener('message',({data})=>{
+    const message=JSON.parse(data);
+    if(message.id){const p=pending.get(message.id);pending.delete(message.id);message.error?p.reject(message.error):p.resolve(message.result);}
+    if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails.text);
+    if(message.method==='Fetch.requestPaused'){
+      const event=message.params;
+      (async()=>{
+        let body,status=200;
+        if(new URL(event.request.url).pathname==='/api/founder')body={company:'Fictional Example Company',searchCount:count,searchLimit:3,searchesRemaining:3-count};
+        else if(new URL(event.request.url).pathname==='/api/search'){
+          searchRequests++;
+          const request=JSON.parse(event.request.postData);requestIds.push(request.requestId);
+          if(failNext){failNext=false;status=503;body={error:'Busy right now. Try again in a few minutes.'};}
+          else if(count>=3){status=429;body={status:'limit_reached',searchCount:3,searchLimit:3,searchesRemaining:0};}
+          else{count++;body={status:'matched',matches,searchCount:count,searchLimit:3,searchesRemaining:3-count};}
+        }else throw Error('Unexpected API request');
+        await send('Fetch.fulfillRequest',{requestId:event.requestId,responseCode:status,responseHeaders:[{name:'Content-Type',value:'application/json'},{name:'Cache-Control',value:'no-store'}],body:Buffer.from(JSON.stringify(body)).toString('base64')});
+      })().catch(error=>errors.push(error.message));
+    }
   });
-  const send = (method, params = {}) => new Promise((resolve, reject) => {pending.set(++id, {resolve, reject}); ws.send(JSON.stringify({id, method, params}));});
-  const evaluate = async expression => {
-    const r = await send('Runtime.evaluate', {expression, awaitPromise: true, returnByValue: true});
-    if (r.exceptionDetails) throw Error('Browser evaluation failed: ' + r.exceptionDetails.text);
-    return r.result.value;
-  };
-  const wait = async expression => {
-    for (let n = 0; n < 100; n++) {if (await evaluate(expression)) return; await new Promise(r => setTimeout(r, 100));}
-    throw Error('Browser did not reach expected state: ' + expression);
-  };
-  const navigate = async code => {
-    await send('Page.navigate', {url: 'about:blank'});
-    await wait('location.href === "about:blank"');
-    await send('Page.navigate', {url: base + '/#f=' + code});
-    await wait('document.getElementById("ask") && !document.getElementById("ask").hidden');
-  };
-  const type = text => evaluate(`pilotAsk.value = ${JSON.stringify(text)}; pilotAsk.dispatchEvent(new Event('input', {bubbles: true}));`);
-  const note = () => evaluate('matchingNote.textContent');
-  const capture = async name => {
-    const shot = await send('Page.captureScreenshot', {format: 'png', captureBeyondViewport: true});
-    fs.writeFileSync(path.join(os.tmpdir(), 'pilot-match-quota-' + name + '.png'), Buffer.from(shot.data, 'base64'));
-  };
-  await send('Page.enable'); await send('Runtime.enable'); await send('Network.enable');
-  for (const [name, width, height] of [['desktop', 1280, 800], ['phone', 390, 844], ['small-phone', 320, 740]]) {
-    reset();
-    await send('Emulation.setDeviceMetricsOverride', {width, height, deviceScaleFactor: 1, mobile: false});
-    await navigate(codes[0]);
-    assert.match(await note(), /3 searches remaining/);
-    assert.equal(await evaluate('searchButton.disabled'), true);
-    await type('word '.repeat(301));
-    assert.equal(await evaluate('searchButton.disabled'), true);
+  const evaluate=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw Error('Browser evaluation failed');return r.result.value;};
+  const wait=async expression=>{for(let n=0;n<100;n++){if(await evaluate(expression))return;await new Promise(resolve=>setTimeout(resolve,100));}throw Error('Expected browser state did not settle: '+expression);};
+  const type=text=>evaluate(`pilotAsk.value=${JSON.stringify(text)};pilotAsk.dispatchEvent(new Event('input',{bubbles:true}));`);
+  await send('Page.enable');await send('Network.enable');await send('Runtime.enable');
+  await send('Fetch.enable',{patterns:[{urlPattern:base+'/api/*',requestStage:'Request'}]});
+  for(const [name,width,height]of[['desktop',1280,800],['phone',390,844],['small-phone',320,740]]){
+    count=0;
+    await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});
+    await send('Page.navigate',{url:'about:blank'});await wait('location.href==="about:blank"');
+    await send('Page.navigate',{url:base+'/#f='+'a'.repeat(43)});await wait('document.getElementById("ask")&&!document.getElementById("ask").hidden');
+    assert.equal(await evaluate('searchButton.disabled'),true);
+    await type('word '.repeat(301));assert.equal(await evaluate('searchButton.disabled'),true);
     await type('A fictional manufacturing pilot');
-    assert.equal(await evaluate('searchButton.disabled'), false);
-    if (name === 'phone') {
-      await evaluate(`window.originalFetch = window.fetch; window.fetch = (url, options) => url === '/api/search' ? Promise.resolve(new Response('{}', {status: 503})) : window.originalFetch(url, options); searchButton.click();`);
-      await wait('searchMessage.textContent === "Busy right now. Try again in a few minutes." && !submitting');
-      assert.match(await note(), /3 searches remaining/);
-      assert.equal((await post('founder', {code: codes[0]})).body.searchCount, 0);
-      await evaluate('window.fetch = window.originalFetch');
-      await capture('phone-error');
+    if(name==='phone'){
+      failNext=true;await evaluate('searchButton.click()');await wait('!submitting && searchMessage.textContent==="Busy right now. Try again in a few minutes."');
+      assert.equal(count,0);assert.equal(await evaluate('matchesSection.hidden'),true);assert.equal(await evaluate('pilotAsk.value'),'A fictional manufacturing pilot');
+      const failedId=requestIds.at(-1);await evaluate('searchButton.click()');await wait('!submitting && remaining===2');assert.notEqual(requestIds.at(-1),failedId,'explicit retry after a known failure gets a new request ID');
+      count=0;await evaluate('window.dispatchEvent(new Event("focus"))');await wait('remaining===3');
     }
-    await capture(name + '-ready');
-    for (let n = 1; n <= 3; n++) {
-      await type('Fictional pilot ask number ' + n);
-      await evaluate('searchButton.click(); searchButton.click();');
-      await wait(`!submitting && remaining === ${3 - n} && searchMessage.textContent === 'Your ask is saved. Matching opens soon.'`);
-      assert.equal((await post('founder', {code: codes[0]})).body.searchCount, n);
+    for(let n=1;n<=3;n++){
+      await type('Fictional pilot '+n);const before=searchRequests;await evaluate('searchButton.click();searchButton.click()');
+      await wait(`!submitting && remaining===${3-n} && !matchesSection.hidden`);
+      assert.equal(searchRequests,before+1,'double click sends one request');
+      assert.equal(await evaluate('matchCards.querySelectorAll("article").length'),2);
+      assert.equal(await evaluate('matchCards.querySelector("h2").textContent'),'Operator example-one');
+      assert.equal(await evaluate('matchCards.querySelector(".fit-score").textContent'),'93/100');
     }
-    assert.equal(await evaluate('searchButton.disabled'), true);
-    assert.equal(await note(), 'You’ve used all 3 searches.');
-    assert.equal(await evaluate('document.documentElement.scrollWidth > innerWidth'), false);
-    assert.equal(await evaluate('localStorage.length + sessionStorage.length'), 0);
-    await capture(name + '-limit');
-    await send('Page.reload', {ignoreCache: true});
-    await wait('document.getElementById("ask") && !document.getElementById("ask").hidden && remaining === 0');
-    assert.equal(await evaluate('searchButton.disabled'), true);
-    assert.equal(await note(), 'You’ve used all 3 searches.');
-    reset();
-    await evaluate('window.dispatchEvent(new Event("focus"))');
-    await wait('remaining === 3');
-    await type('Fictional ask after a reset');
-    assert.equal(await evaluate('searchButton.disabled'), false);
-    await navigate(codes[1]);
-    assert.match(await note(), /3 searches remaining/);
-    await evaluate('document.getElementById("back").click(); document.getElementById("open-ask").click();');
-    assert.equal(await evaluate('searchButton.disabled'), true);
-    assert.equal(await note(), 'Matching opens soon');
-    console.log(`${name}: three saves, double-click protection, remembered limit, reset, independent founder, no overflow, no browser storage passed.`);
+    assert.equal(await evaluate('searchButton.disabled'),true);
+    assert.equal(await evaluate('matchingNote.textContent'),'You’ve used all 3 searches.');
+    const rectangles=await evaluate('Array.from(matchCards.children,card=>({top:card.getBoundingClientRect().top,left:card.getBoundingClientRect().left}))');
+    if(name==='desktop')assert.equal(rectangles[0].top,rectangles[1].top);else assert.ok(rectangles[1].top>rectangles[0].top);
+    assert.equal(await evaluate('document.documentElement.scrollWidth>innerWidth'),false);
+    const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true});fs.writeFileSync(path.join(os.tmpdir(),'pilot-match-matching-'+name+'.png'),Buffer.from(shot.data,'base64'));
+    await send('Page.reload',{ignoreCache:true});await wait('document.getElementById("ask")&&!document.getElementById("ask").hidden&&remaining===0');
+    assert.equal(await evaluate('searchButton.disabled'),true);assert.equal(await evaluate('matchesSection.hidden'),true);
+    count=0;await evaluate('window.dispatchEvent(new Event("focus"))');await wait('remaining===3');await type('A fictional ask after reset');assert.equal(await evaluate('searchButton.disabled'),false);
+    await evaluate('document.getElementById("back").click()');assert.equal(await evaluate('matchesSection.hidden'),true);
+    console.log(name+': two anonymous cards, correct layout, error recovery, no double clicks, cap/reload/reset and no overflow passed.');
   }
-  assert.deepEqual(errors, []);
-  ws.close();
-  reset(); reset('b');
-  console.log('Hosted Convex checks passed: eight simultaneous requests allow exactly three, rejected asks cost zero, retries cost once, phone error costs zero.');
-})().catch(error => {console.error(error); process.exitCode = 1;});
+  await send('Fetch.disable');assert.deepEqual(errors,[]);ws.close();console.log('Browser contract checks passed using fictional replies; no paid AI calls.');
+})().catch(error=>{console.error(error);process.exitCode=1;});

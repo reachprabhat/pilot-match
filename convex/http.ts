@@ -34,9 +34,10 @@ http.route({path:"/search",method:"POST",handler:httpAction(async(ctx,request)=>
     if(typeof body.ask!=="string"||typeof body.requestId!=="string")return reply({error:"Enter your pilot ask in 300 words or fewer."},400);
     const bytes=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(body.code));
     const linkHash=Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,"0")).join("");
-    const result=await ctx.runMutation(internal.founderSearches.submit,{linkHash,requestId:body.requestId,ask:body.ask});
+    const result=await ctx.runAction(internal.matching.run,{linkHash,requestId:body.requestId,ask:body.ask});
     if(result.status==="invalid_link")return reply({error:"Invalid link."},404);
     if(result.status==="invalid_ask")return reply({error:"Enter your pilot ask in 300 words or fewer."},400);
+    if(result.status==="busy")return reply({error:"Busy right now. Try again in a few minutes."},503);
     return reply(result,result.status==="limit_reached"?429:200);
   }catch{return reply({error:"Busy right now. Try again in a few minutes."},503);}
 })});
