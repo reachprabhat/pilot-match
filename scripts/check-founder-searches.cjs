@@ -19,6 +19,7 @@ const base='https://neat-hyena-46.convex.site';
       (async()=>{
         let body,status=200;
         if(new URL(event.request.url).pathname==='/api/founder')body={company:'Fictional Example Company',searchCount:count,searchLimit:3,searchesRemaining:3-count};
+        else if(new URL(event.request.url).pathname==='/api/matches')body={matches:count?matches.map(match=>({...match,choice:null})):[]};
         else if(new URL(event.request.url).pathname==='/api/search'){
           searchRequests++;
           const request=JSON.parse(event.request.postData);requestIds.push(request.requestId);
@@ -64,7 +65,8 @@ const base='https://neat-hyena-46.convex.site';
     assert.equal(await evaluate('document.documentElement.scrollWidth>innerWidth'),false);
     const shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true});fs.writeFileSync(path.join(os.tmpdir(),'pilot-match-matching-'+name+'.png'),Buffer.from(shot.data,'base64'));
     await send('Page.reload',{ignoreCache:true});await wait('document.getElementById("ask")&&!document.getElementById("ask").hidden&&remaining===0');
-    assert.equal(await evaluate('searchButton.disabled'),true);assert.equal(await evaluate('matchesSection.hidden'),true);
+    await wait('!matchesSection.hidden && matchCards.children.length===2');
+    assert.equal(await evaluate('searchButton.disabled'),true);assert.equal(await evaluate('matchesSection.hidden'),false);
     count=0;await evaluate('window.dispatchEvent(new Event("focus"))');await wait('remaining===3');await type('A fictional ask after reset');assert.equal(await evaluate('searchButton.disabled'),false);
     await evaluate('document.getElementById("back").click()');assert.equal(await evaluate('matchesSection.hidden'),true);
     console.log(name+': two anonymous cards, correct layout, error recovery, no double clicks, cap/reload/reset and no overflow passed.');

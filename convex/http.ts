@@ -21,6 +21,31 @@ http.route({path:"/founder",method:"POST",handler:httpAction(async(ctx,request)=
 })});
 export default http;
 
+for(const path of ["/matches","/choice"]){
+  http.route({path,method:"POST",handler:httpAction(async(ctx,request)=>{
+    const headers={"Content-Type":"application/json","Cache-Control":"no-store"};
+    const reply=(body:unknown,status:number)=>new Response(JSON.stringify(body),{status,headers});
+    try{
+      if(Number(request.headers.get("content-length"))>1024)return reply({error:"Invalid request."},400);
+      const text=await request.text();
+      if(text.length>1024)return reply({error:"Invalid request."},400);
+      let body;
+      try{body=JSON.parse(text);}catch{return reply({error:"Invalid request."},400);}
+      if(typeof body?.code!=="string"||!/^[A-Za-z0-9_-]{43}$/.test(body.code))return reply({error:"Invalid link."},404);
+      const bytes=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(body.code));
+      const linkHash=Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,"0")).join("");
+      if(path==="/matches"){
+        const result=await ctx.runQuery(internal.choices.latest,{linkHash});
+        return result?reply(result,200):reply({error:"Invalid link."},404);
+      }
+      if(typeof body.operatorId!=="string"||body.operatorId.length>100||!["Requested","Parked","Rejected"].includes(body.status))return reply({error:"Invalid choice."},400);
+      const result=await ctx.runMutation(internal.choices.save,{linkHash,operatorId:body.operatorId,status:body.status});
+      if("error" in result)return reply({error:result.error==="invalid_link"?"Invalid link.":"Reload to choose from your latest matches."},result.error==="invalid_link"?404:409);
+      return reply(result,200);
+    }catch{return reply({error:"Busy right now. Try again in a few minutes."},503);}
+  })});
+}
+
 http.route({path:"/search",method:"POST",handler:httpAction(async(ctx,request)=>{
   const headers={"Content-Type":"application/json","Cache-Control":"no-store"};
   const reply=(body:unknown,status:number)=>new Response(JSON.stringify(body),{status,headers});

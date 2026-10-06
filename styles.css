@@ -79,6 +79,14 @@ textarea::placeholder { color: #655d54; opacity: 1; }
 #match-cards h2 { font-size: 20px; line-height: 1.4; margin: 0 0 16px; }
 #match-cards p { margin: 0; overflow-wrap: anywhere; }
 #match-cards .fit-score { font-size: 40px; font-weight: 600; line-height: 1.2; margin-bottom: 16px; font-variant-numeric: tabular-nums; }
+.choice-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 24px; }
+.choice-actions .primary { grid-column: 1 / -1; padding: 14px 16px; }
+.secondary { padding: 12px; border: 1px solid var(--line); border-radius: 28px; background: transparent; color: inherit; line-height: 1.5; }
+.secondary:hover:not(:disabled) { background: #f5f2ec; }
+.secondary:disabled { color: #514a43; cursor: not-allowed; }
+.choice-actions [aria-pressed="true"] { outline: 2px solid var(--brown); outline-offset: 2px; }
+#match-cards .choice-status { margin-top: 16px; min-height: 26px; font-weight: 600; }
+.choice-status.error { color: #a32720; font-weight: 400; }
 ::selection { background: #d9d1c6; color: #26231f; }
 @media (max-width: 600px) {
   main { min-height: 100svh; align-items: end; padding: 24px 16px; }

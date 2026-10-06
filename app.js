@@ -21,7 +21,7 @@ const matchCards = document.getElementById('match-cards');
 let searchVersion = 0;
 
 function clearMatches() {matchesSection.hidden = true; matchCards.replaceChildren();}
-function showMatches(matches) {
+function showMatches(matches, focus = true) {
   if (!Array.isArray(matches) || matches.length !== 2 || new Set(matches.map(match => match.operatorId)).size !== 2 ||
       matches.some(match => typeof match.operatorId !== 'string' || !Number.isInteger(match.score) || match.score < 0 || match.score > 100 || typeof match.why !== 'string' || !match.why))
     throw new Error('Invalid matches');
@@ -36,11 +36,77 @@ function showMatches(matches) {
     score.textContent = `${match.score}/100`;
     score.setAttribute('aria-label', `Fit score ${match.score} out of 100`);
     reason.textContent = match.why.replace(/\bSCM\b/g, 'supply chain management');
-    card.append(title, score, reason);
+    const actions = document.createElement('div');
+    actions.className = 'choice-actions';
+    const status = document.createElement('p');
+    status.className = 'choice-status';
+    status.setAttribute('role', 'status');
+    let savedChoice = match.choice || '';
+    let saving = false;
+    const buttons = [];
+    const updateChoice = () => {
+      status.classList.remove('error');
+      status.textContent = savedChoice;
+      for (const button of buttons) button.setAttribute('aria-pressed', String(button.dataset.status === savedChoice));
+    };
+    for (const [label, value] of [['Request to meet', 'Requested'], ['Park', 'Parked'], ['Reject', 'Rejected']]) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = label;
+      button.className = value === 'Requested' ? 'primary' : 'secondary';
+      button.dataset.status = value;
+      buttons.push(button);
+      actions.append(button);
+      button.addEventListener('click', async () => {
+        if (saving || !personalCode) return;
+        const code = personalCode;
+        const version = searchVersion;
+        saving = true;
+        buttons.forEach(item => {item.disabled = true;});
+        status.classList.remove('error');
+        status.textContent = 'Saving...';
+        try {
+          const response = await fetch('/api/choice', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({code, operatorId: match.operatorId, status: value}),
+            cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer', signal: AbortSignal.timeout(15000),
+          });
+          const result = await response.json();
+          if (personalCode !== code || searchVersion !== version || !card.isConnected) return;
+          if (!response.ok || result.operatorId !== match.operatorId || result.status !== value) {
+            if (response.status === 409) throw new Error('Reload to choose from your latest matches.');
+            throw new Error('Could not confirm your choice. Try again or reload.');
+          }
+          savedChoice = result.status;
+          updateChoice();
+        } catch (error) {
+          if (personalCode !== code || searchVersion !== version || !card.isConnected) return;
+          status.textContent = `${savedChoice ? savedChoice + '. ' : ''}${error.message === 'Reload to choose from your latest matches.' ? error.message : 'Could not confirm your choice. Try again or reload.'}`;
+          status.classList.add('error');
+        } finally {
+          saving = false;
+          buttons.forEach(item => {item.disabled = false;});
+        }
+      });
+    }
+    updateChoice();
+    card.append(title, score, reason, actions, status);
     matchCards.append(card);
   }
   matchesSection.hidden = false;
-  document.getElementById('matches-title').focus();
+  if (focus) document.getElementById('matches-title').focus();
+}
+
+async function restoreMatches(code, signal) {
+  const version = searchVersion;
+  const response = await fetch('/api/matches', {
+    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({code}),
+    cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer', signal,
+  });
+  if (!response.ok) throw new Error('Could not load saved matches');
+  const result = await response.json();
+  if (personalCode !== code || version !== searchVersion) return;
+  if (result.matches?.length) showMatches(result.matches, false);
 }
 
 function showSearchMessage(message, error = false) {
@@ -124,6 +190,8 @@ async function openPersonalLink() {
     linkState.hidden = true;
     ask.hidden = false;
     document.getElementById('ask-title').focus();
+    try { await restoreMatches(personalCode, current.signal); }
+    catch { if (lookup === current) showSearchMessage('Your saved matches could not load. Reload to try again.', true); }
   } catch {
     if (lookup !== current) return;
     linkTitle.textContent = 'Your link could not open';
@@ -202,10 +270,14 @@ searchButton.addEventListener('click', async () => {
     const result = await response.json();
     if (submitting !== controller) return;
     if (result.status !== 'matched' && result.status !== 'limit_reached') throw new Error('Invalid reply');
-    if (result.status === 'matched') showMatches(result.matches);
+    showSearchMessage('');
+    if (result.status === 'matched') {
+      showMatches(result.matches);
+      try { await restoreMatches(code, controller.signal); }
+      catch { showSearchMessage('Your matches are saved. Reload to see their saved choices.', true); }
+    }
     applySearchState(result);
     pendingRequest = undefined;
-    showSearchMessage('');
   } catch {
     if (submitting === controller) showSearchMessage('Busy right now. Try again in a few minutes.', true);
   } finally {

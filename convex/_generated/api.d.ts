@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as choiceValidators from "../choiceValidators.js";
+import type * as choices from "../choices.js";
 import type * as enrichmentValidators from "../enrichmentValidators.js";
 import type * as founderSearches from "../founderSearches.js";
 import type * as founders from "../founders.js";
@@ -33,6 +35,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  choiceValidators: typeof choiceValidators;
+  choices: typeof choices;
   enrichmentValidators: typeof enrichmentValidators;
   founderSearches: typeof founderSearches;
   founders: typeof founders;

@@ -2,8 +2,11 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { enrichmentValidator } from "./enrichmentValidators";
 import {matchValidator} from "./matchingValidators";
+import {choiceStatusValidator} from "./choiceValidators";
 
 export default defineSchema({
+  founderChoices: defineTable({founderId:v.id("founders"),operatorId:v.string(),status:choiceStatusValidator,updatedAt:v.number()})
+    .index("by_founder_operator",["founderId","operatorId"]),
   founders: defineTable({
     founderId:v.string(), name:v.string(), whatsappNumber:v.string(),
     headline:v.string(),company:v.string(),currentRole:v.string(),location:v.string(),
