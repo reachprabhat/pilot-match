@@ -9,6 +9,7 @@ ws.addEventListener('message',({data})=>{const e=JSON.parse(data);if(e.id){const
 if(p==='/api/founder')body={company:'Example Company',searchCount:0,searchLimit:3,searchesRemaining:3};
 else if(p==='/api/matches')body={ask:mode==='results'?'A manufacturing bottleneck pilot.':'',matches:mode==='results'?matches:[]};
 else if(p==='/api/operator/requests')body={requests:mode==='operator-requests'?[{requestId:'fictional-request',ask:'A manufacturing pilot to identify production bottlenecks.',requestedAt:1,response:null}]:[],isDone:true,continueCursor:''};
+else if(p==='/api/admin/approved-operators')body={operators:[],isDone:true,continueCursor:''};
 else if(p==='/api/admin/operator-applications')body={applications:[],isDone:true,continueCursor:''};
 else if(p==='/api/admin/requests')body={requests:[],isDone:true,continueCursor:''};
 else if(p==='/api/introductions/seen')body={seen:true};

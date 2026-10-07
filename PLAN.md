@@ -62,3 +62,6 @@ Rename Pilot preferences to Your industry and require exactly one choice for new
 
 ## Approved Other industry option (dev only)
 Keep exactly one Your industry choice and add Other. Selecting Other reveals a required short text field capped at 50 characters; approval saves its trimmed value in the existing industry field. Help areas and optional 200-character companyProblems mapping remain unchanged. Owner explicitly authorised a fictional Fashion E-commerce signup and approval. Existing operators, matching logic, approval flow and production unchanged.
+
+## Approved operators and manual WhatsApp notices (dev only)
+Owner-authorised extension completed: signup retains single Your industry / Other max 50 and optional companyProblems max 200. Approval now creates the standard operator personal requests link without rotating any existing link. Admin lists approved applications with saved name, company, industry and approval date; green Send on WhatsApp opens the exact welcome draft. Each current new request has green Notify operator using saved company/name/link; tapping persists a separate Notified marker without changing request status or sending a message. Owner-only access, matching and reveal unchanged. Browser proof complete; production not authorised.

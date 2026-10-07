@@ -24,6 +24,19 @@
 #applications-section button { margin-top: 24px; }
 #applications-more, #applications-refresh { width: 100%; }
 #applications-message.error { color: var(--error); }
+#approved-section { margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--line); }
+#approved-section article { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--line); }
+#approved-section dl { margin: 0; }
+#approved-section dt { font-weight: 600; line-height: 1.6; margin-top: 16px; }
+#approved-section dd { margin: 4px 0 0; line-height: 1.6; overflow-wrap: anywhere; }
+#approved-section p { margin: 16px 0 0; }
+#approved-more, #approved-refresh { width: 100%; margin-top: 24px; }
+#approved-message.error { color: var(--error); }
+.admin-panel article h3 { overflow-wrap: anywhere; }
+.primary.admin-whatsapp { display: block; width: 100%; text-align: center; text-decoration: none; margin-top: 24px; background: var(--whatsapp); color: var(--white); }
+.primary.admin-whatsapp:hover { background: var(--whatsapp); filter: brightness(.95); }
+.notification-status { margin-top: 16px !important; font-weight: 600; }
+.notification-status.error { color: var(--error); }
 @media (max-width: 600px) {
   .admin-panel { min-height: min(640px, calc(100svh - 220px)); }
   #admin-refresh { margin-top: auto; }

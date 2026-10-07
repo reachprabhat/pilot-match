@@ -9,8 +9,10 @@
     <title>Besto — Meeting requests</title>
     <link rel="stylesheet" href="/styles.css" />
     <link rel="stylesheet" href="/admin.css" />
+    <script src="/admin-whatsapp.js" defer></script>
     <script src="/admin.js" defer></script>
     <script src="/admin-applications.js" defer></script>
+    <script src="/admin-approved.js" defer></script>
   </head>
   <body>
     <header class="brand-header"><div class="brand-lockup"><svg xmlns="http://www.w3.org/2000/svg" width="116" height="72" viewBox="0 12 96 60" aria-hidden="true"><g fill="currentColor"><path d="M0 28 14 12 28 25 13 44Z"/><path d="M96 28 82 12 68 25 83 44Z"/><path d="M17 30 31 18H43L75 49 75 55 68 62 62 67 55 71 49 69 24 45Z"/><path d="M79 30 65 18H53L33 33 33 37 38 41 42 40 51 33 73 54 82 43Z"/></g><g fill="none" stroke="var(--surface)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M49 43 69 62M43 50 61 67M37 57 51 70M14 43 27 26M82 43 69 26M33 33 33 37 38 41 42 40 51 33 73 54"/></g></svg><div><strong class="brand-wordmark">Besto</strong><p>Meet the best Operators</p></div></div></header>
@@ -21,7 +23,7 @@
         <div id="admin-content" hidden>
           <section aria-labelledby="new-title">
             <h2 id="new-title">New requests</h2>
-            <p>Send each operator their personal link from your private Operator Links file.</p>
+            <p>Open WhatsApp to notify each operator about their new request. Notified means you tapped to open WhatsApp; send the message there.</p>
             <p id="new-empty">No new requests.</p>
             <div id="new-list"></div>
           </section>
@@ -44,6 +46,13 @@
           <div id="applications-list"></div>
           <button id="applications-more" class="secondary" type="button" hidden>Show more operators</button>
           <button id="applications-refresh" class="secondary" type="button">Refresh operators</button>
+        </section>
+        <section id="approved-section" aria-labelledby="approved-title" hidden>
+          <h2 id="approved-title">Approved operators</h2>
+          <p id="approved-message" role="status"></p>
+          <div id="approved-operators-list"></div>
+          <button id="approved-more" class="secondary" type="button" hidden>Show more approved operators</button>
+          <button id="approved-refresh" class="secondary" type="button">Refresh approved operators</button>
         </section>
         <button id="admin-refresh" class="primary" type="button" hidden>Refresh requests</button>
       </section>

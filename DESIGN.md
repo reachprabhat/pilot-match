@@ -109,3 +109,5 @@ Your industry replaces Pilot preferences: the same vocabulary rendered as a requ
 
 
 Other industry chip: final radio option in the existing Your industry group. Reveal a full-width Your industry (Other) text input immediately below the chips only when selected. Native maxlength 50, required for Other, disabled/hidden for ordinary chips, with Maximum 50 characters helper. Existing typography, navy tokens, spacing, help areas, pain-points box and consent unchanged.
+
+Admin approved operators: reuse existing section/card typography and spacing; name, company, industry, approved date, then full-width WhatsApp-green (#25D366) Send on WhatsApp with white text. New request cards add Not notified/Notified and matching green Notify operator. Header, signup, reveal and other screens retain their current layouts. Long IDs wrap at phone width. Admin guidance states that opening a draft is not delivery.

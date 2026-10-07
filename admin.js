@@ -27,6 +27,11 @@ function addCard(request){
   if(request.topFeatures?.length){const section=document.createElement('section'),h=document.createElement('h3'),ul=document.createElement('ul');h.textContent='Top 2 features';for(const value of request.topFeatures){const li=document.createElement('li');li.textContent=value;ul.append(li);}section.append(h,ul);article.append(section);}
   if(request.pilotsDone!==undefined)detail('Number of pilots done',request.pilotsDone);
   if(request.why)detail('Why it fits your company',request.why);
+  if(request.status==='Requested'){
+    const note=document.createElement('p');note.className='notification-status';note.setAttribute('role','status');note.textContent=request.notifiedAt?'Notified':'Not notified';article.append(note);
+    if(request.requestsLink){const button=BestoAdminWhatsApp.button('Notify operator',request.operatorPhone,BestoAdminWhatsApp.notify(request.operatorName,request.founderCompany??'',request.requestsLink));if(button){article.append(button);let marking=false;button.addEventListener('click',async()=>{if(marking)return;marking=true;const current=version;note.textContent='Marking Notified...';note.classList.remove('error');try{const response=await fetch('/api/admin/notify-operator',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,requestId:request.requestId,requestedAt:request.requestedAt}),cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(15000)});if(current!==version)return;if(!response.ok)throw Error();note.textContent='Notified';}catch{if(current===version){note.textContent='Could not mark Notified. Tap again to retry.';note.classList.add('error');}}finally{marking=false;}});}}
+    else{const missing=document.createElement('p');missing.textContent='Personal link unavailable. Refresh requests.';article.append(missing);}
+  }
   lists[request.status].append(article);shown.add(request.requestId);
 }
 async function load(){
@@ -55,6 +60,7 @@ function restart(){version++;controller?.abort();loading=false;cursor=null;clear
 refresh.addEventListener('click',()=>{if(refresh.textContent==='Try again')void load();else restart();});
 more.addEventListener('click',()=>void load());
 addEventListener('hashchange',restart);
+addEventListener('besto:operator-links-ready',restart);
 addEventListener('pagehide',()=>{version++;controller?.abort();clear();});
 addEventListener('pageshow',event=>{if(event.persisted)restart();});
 restart();heading.focus({preventScroll:true});

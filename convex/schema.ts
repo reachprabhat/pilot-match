@@ -7,6 +7,8 @@ import {operatorResponseValidator} from "./responseValidators";
 import {applicationFields} from "./operatorApplicationValidators";
 
 export default defineSchema({
+  operatorLinkSecrets:defineTable({operatorId:v.string(),encryptedCode:v.string()}).index("by_operator_id",["operatorId"]),
+  adminRequestNotifications:defineTable({requestId:v.id("founderChoices"),requestedAt:v.number(),notifiedAt:v.number()}).index("by_request_identity",["requestId","requestedAt"]),
   operatorApplications:defineTable({...applicationFields,industrySelectionVersion:v.optional(v.literal(1)),submissionId:v.string(),consentText:v.string(),consentedAt:v.number(),status:v.union(v.literal("Pending"),v.literal("Approved")),operatorId:v.optional(v.string()),approvedAt:v.optional(v.number())})
     .index("by_status",["status"]).index("by_submission_id",["submissionId"]),
   introductions: defineTable({requestId:v.id("founderChoices"),searchId:v.id("founderSearches"),requestedAt:v.number(),founderId:v.id("founders"),operatorId:v.string(),status:v.union(v.literal("queued"),v.literal("running"),v.literal("ready"),v.literal("failed")),welcome:v.optional(v.string()),responseId:v.optional(v.string()),callId:v.optional(v.id("aiCalls")),providerCallCount:v.optional(v.number()),founderSeenAt:v.optional(v.number()),operatorSeenAt:v.optional(v.number())})

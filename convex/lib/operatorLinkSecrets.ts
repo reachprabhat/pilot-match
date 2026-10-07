@@ -1,0 +1,9 @@
+const encoder=new TextEncoder();
+export async function hashCode(code:string){const bytes=await crypto.subtle.digest("SHA-256",encoder.encode(code));return Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,"0")).join("");}
+const encode=(bytes:Uint8Array)=>btoa(String.fromCharCode(...bytes)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+const decode=(text:string)=>Uint8Array.from(atob(text.replace(/-/g,"+").replace(/_/g,"/")),c=>c.charCodeAt(0));
+export function randomCode(){return encode(crypto.getRandomValues(new Uint8Array(32)));}
+async function key(adminCode:string){return crypto.subtle.importKey("raw",await crypto.subtle.digest("SHA-256",encoder.encode("Besto operator requests links v1:"+adminCode)),"AES-GCM",false,["encrypt","decrypt"]);}
+export async function encryptCode(adminCode:string,operatorId:string,code:string){const iv=crypto.getRandomValues(new Uint8Array(12)),cipher=await crypto.subtle.encrypt({name:"AES-GCM",iv,additionalData:encoder.encode(operatorId)},await key(adminCode),encoder.encode(code));return "v1."+encode(iv)+"."+encode(new Uint8Array(cipher));}
+export async function decryptCode(adminCode:string,operatorId:string,encrypted:string,expectedHash:string){const [version,iv,cipher]=encrypted.split(".");if(version!=="v1")throw Error("Invalid protected link.");const code=new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:decode(iv),additionalData:encoder.encode(operatorId)},await key(adminCode),decode(cipher)));if(!/^[A-Za-z0-9_-]{43}$/.test(code)||await hashCode(code)!==expectedHash)throw Error("Invalid protected link.");return code;}
+export async function proposedLink(adminCode:string,operatorId:string){const code=randomCode();return {newLinkHash:await hashCode(code),encryptedLink:await encryptCode(adminCode,operatorId,code)};}

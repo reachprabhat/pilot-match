@@ -10,7 +10,7 @@ export const list=internalQuery({
     requestId:v.id("founderChoices"),founderId:v.string(),operatorId:v.string(),requestedAt:v.number(),
     status:v.union(v.literal("Requested"),v.literal("Accepted")),ask:v.string(),
     operatorName:v.string(),operatorPhone:v.string(),founderName:v.optional(v.string()),founderPhone:v.optional(v.string()),
-    industry:v.optional(v.string()),topFeatures:v.optional(v.array(v.string())),pilotsDone:v.optional(v.string()),why:v.optional(v.string()),
+    industry:v.optional(v.string()),topFeatures:v.optional(v.array(v.string())),pilotsDone:v.optional(v.string()),why:v.optional(v.string()),founderCompany:v.optional(v.string()),operatorLinkHash:v.optional(v.string()),encryptedCode:v.optional(v.string()),notifiedAt:v.optional(v.number()),
   }),v.object({
     requestId:v.id("founderChoices"),founderId:v.string(),operatorId:v.string(),requestedAt:v.number(),
     status:v.literal("Declined"),founderName:v.string(),operatorName:v.string(),declinedAt:v.number(),
@@ -40,9 +40,13 @@ export const list=internalQuery({
       const present=(value:string|undefined)=>Boolean(value?.trim()&&!/^(not found|unknown|n\/a|none|-)$/i.test(value.trim()));
       const features=(founder.topFeatures??"").split(/\r?\n|;|[•●]/).map(value=>value.replace(/^\s*(?:[-*]|\d+[.)])\s*/,"").trim()).filter(value=>present(value)).slice(0,2);
       const pilots=(founder.pilotDone??"").trim();
+      const operatorLink=await ctx.db.query("operatorLinks").withIndex("by_operator_id",q=>q.eq("operatorId",operator.operatorId)).unique();
+      const secret=await ctx.db.query("operatorLinkSecrets").withIndex("by_operator_id",q=>q.eq("operatorId",operator.operatorId)).unique();
+      const notification=await ctx.db.query("adminRequestNotifications").withIndex("by_request_identity",q=>q.eq("requestId",choice._id).eq("requestedAt",identity.requestedAt)).unique();
       requests.push({requestId:choice._id,founderId:founder.founderId,operatorId:choice.operatorId,requestedAt:identity.requestedAt,
         status:response?.status==="Interested"?"Accepted" as const:"Requested" as const,
-        ask:clean(search.ask),operatorName:operator.name,operatorPhone:operator.whatsappNumber,
+        ask:clean(search.ask),operatorName:operator.name,operatorPhone:operator.whatsappNumber,founderCompany:founder.company,
+        ...(operatorLink?{operatorLinkHash:operatorLink.linkHash}:{}),...(secret?{encryptedCode:secret.encryptedCode}:{}),...(notification?{notifiedAt:notification.notifiedAt}:{}),
         ...(response?.status==="Interested"?{founderName:founder.name,founderPhone:founder.whatsappNumber}:{}),
         ...(present(founder.industry)?{industry:clean(founder.industry)}:{}),
         ...(features.length?{topFeatures:features.map(clean)}:{}),

@@ -2,12 +2,16 @@ import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import * as applications from "./operatorApplicationHttp";
+import {http as notify} from "./adminNotifications";
+import {decryptCode} from "./lib/operatorLinkSecrets";
 
 const http=httpRouter();
 http.route({path:"/operator-signup/options",method:"GET",handler:applications.options});
 http.route({path:"/operator-signup",method:"POST",handler:applications.submit});
 http.route({path:"/admin/operator-applications",method:"POST",handler:applications.admin});
 http.route({path:"/admin/operator-applications/approve",method:"POST",handler:applications.admin});
+http.route({path:"/admin/approved-operators",method:"POST",handler:applications.admin});
+http.route({path:"/admin/notify-operator",method:"POST",handler:notify});
 for(const path of ["/introductions","/introductions/seen"]){
   http.route({path,method:"POST",handler:httpAction(async(ctx,request)=>{
     const headers={"Content-Type":"application/json","Cache-Control":"no-store","Referrer-Policy":"no-referrer"};
@@ -42,7 +46,9 @@ http.route({path:"/admin/requests",method:"POST",handler:httpAction(async(ctx,re
     const bytes=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(body.code));
     const linkHash=Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,"0")).join("");
     const result=await ctx.runQuery(internal.adminRequests.list,{linkHash,paginationOpts:{numItems:20,cursor:body.cursor??null}});
-    return result?reply(result,200):reply({error:"Access denied."},404);
+    if(!result)return reply({error:"Access denied."},404);
+    const requests=[];for(const row of result.requests){if(row.status==="Declined"){requests.push(row);continue;}const {operatorLinkHash,encryptedCode,...fields}=row;const code=operatorLinkHash&&encryptedCode?await decryptCode(body.code,row.operatorId,encryptedCode,operatorLinkHash):null;requests.push({...fields,requestsLink:code?new URL("/operator.html#o="+code,request.url).href:null});}
+    return reply({...result,requests},200);
   }catch{return reply({error:"Busy right now. Try again in a few minutes."},503);}
 })});
 http.route({path:"/operator/response",method:"POST",handler:httpAction(async(ctx,request)=>{

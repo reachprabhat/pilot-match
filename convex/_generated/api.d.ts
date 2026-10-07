@@ -9,6 +9,8 @@
  */
 
 import type * as adminLinks from "../adminLinks.js";
+import type * as adminNotifications from "../adminNotifications.js";
+import type * as adminOperatorLinks from "../adminOperatorLinks.js";
 import type * as adminRequests from "../adminRequests.js";
 import type * as choiceValidators from "../choiceValidators.js";
 import type * as choices from "../choices.js";
@@ -24,6 +26,7 @@ import type * as lib_evidenceSource from "../lib/evidenceSource.js";
 import type * as lib_matching from "../lib/matching.js";
 import type * as lib_meetingResponses from "../lib/meetingResponses.js";
 import type * as lib_operatorApplication from "../lib/operatorApplication.js";
+import type * as lib_operatorLinkSecrets from "../lib/operatorLinkSecrets.js";
 import type * as lib_opportunity from "../lib/opportunity.js";
 import type * as lib_repairDash from "../lib/repairDash.js";
 import type * as matching from "../matching.js";
@@ -51,6 +54,8 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   adminLinks: typeof adminLinks;
+  adminNotifications: typeof adminNotifications;
+  adminOperatorLinks: typeof adminOperatorLinks;
   adminRequests: typeof adminRequests;
   choiceValidators: typeof choiceValidators;
   choices: typeof choices;
@@ -66,6 +71,7 @@ declare const fullApi: ApiFromModules<{
   "lib/matching": typeof lib_matching;
   "lib/meetingResponses": typeof lib_meetingResponses;
   "lib/operatorApplication": typeof lib_operatorApplication;
+  "lib/operatorLinkSecrets": typeof lib_operatorLinkSecrets;
   "lib/opportunity": typeof lib_opportunity;
   "lib/repairDash": typeof lib_repairDash;
   matching: typeof matching;

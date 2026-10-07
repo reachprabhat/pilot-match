@@ -135,3 +135,5 @@ Signup refinement: new applicants choose exactly one Your industry entry, saved 
 
 
 Other industry: applicants choose one predefined chip or Other with nonblank text up to 50 characters. Save the choice and custom text in the Pending application; on owner approval, industry stores the chosen predefined label or exact trimmed custom text. No matching function change or existing profile migration. Help capabilities remain about; optional declared pain points remain companyProblems, capped at 200 characters. Dev only.
+
+Admin operator onboarding extension (dev only): approval creates a standard personal requests link. Approved operators lists saved name/company/industry/approval date and opens the requested welcome draft. New request Notify operator opens the requested company-specific draft in a new tab and saves Notified after the tap. This means the draft was opened, not delivery. Notification markers are separate from meeting responses and keyed to the current request attempt. Existing links, operators, matching, quotas and Accepted-only contact access are preserved.
