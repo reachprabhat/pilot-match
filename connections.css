@@ -12,8 +12,11 @@ html:has(.connection-reveal[open]) { overflow: hidden; }
 .connection-whatsapp:hover { filter: brightness(1.15); }
 .connection-reveal { position: fixed; inset: 0; width: 100%; max-width: none; height: 100%; max-height: none; margin: 0; padding: 32px 24px; border: 0; color: #26231f; background: #faf8f4; overflow-y: auto; }
 .connection-reveal::backdrop { background: #faf8f4; }
-.connection-reveal .connection-card { display: flex; flex-direction: column; width: min(100%, 600px); min-height: calc(100% - 0px); margin: 0 auto; padding: 0; border: 0; border-radius: 0; }
-.connection-reveal h1 { font-size: 40px; line-height: 1.2; margin: 0 0 24px; }
+.reveal-shell { display: flex; flex-direction: column; min-height: 100%; width: min(100%, 600px); margin: 0 auto; }
+.connection-reveal .brand-header { width: 100%; margin: 0 0 32px; }
+.connection-reveal .brand-footer { width: 100%; margin: 24px 0 0; }
+.connection-reveal .connection-card { display: flex; flex-direction: column; flex: 1; width: 100%; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 0; }
+.connection-reveal h1 { font-size: 20px; line-height: 1.4; margin: 0 0 16px; }
 .connection-reveal h1:focus { outline: none; }
 .connection-reveal .connection-whatsapp { margin-top: auto; }
 .connection-continue { width: 100%; margin-top: 16px; }

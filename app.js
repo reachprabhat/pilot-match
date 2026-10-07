@@ -164,7 +164,8 @@ function updateSearchButton() {
   const words = pilotAsk.value.trim().split(/\s+/u).filter(Boolean).length;
   searchButton.disabled = !personalCode || remaining === 0 || !!submitting || words === 0 || words > 300 || pilotAsk.value.length > 12000;
   searchButton.textContent = submitting ? 'Searching...' : 'Search';
-  matchingNote.textContent = !personalCode ? 'Matching opens soon'
+  document.getElementById('personal-link-guidance').hidden = !!personalCode;
+  matchingNote.textContent = !personalCode ? 'A personal link is needed to search.'
     : remaining === 0 ? `You’ve used all ${searchLimit} searches.`
     : `${remaining} ${remaining === 1 ? 'search' : 'searches'} remaining. Maximum 300 words.`;
 }

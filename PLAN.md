@@ -38,3 +38,6 @@ Complete: Accepted connection reveal shipped and live-verified; original milesto
 Dev verified; authorised for deployment. Clean the saved number, add 91 only for ten digits, and open a new tab with the specified first-name greeting prefilled. Layout and contact access stay unchanged. Native phone-app screenshot requires the owner phone.
 
 WhatsApp link extension shipped after dev checks: live exact message/new-tab behavior verified. Native phone-app screenshot remains an owner check.
+
+## Approved extension: Besto branding
+Owner approved dev first then deploy. Shared header/footer on landing, ask, results, operator requests, both reveals, admin and recovery states; WhatsApp drafts say introduced through Besto. Parked no-personal-link Ask issue addressed with guidance only; other parked ideas stay parked. Dev proof followed by live 390px screenshots and production-data comparison.

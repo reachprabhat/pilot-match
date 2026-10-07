@@ -37,7 +37,7 @@
     if (digits.length >= 7 && digits.length <= 15) {
       const message = document.createElement('a'); message.className = 'primary connection-whatsapp'; message.textContent = 'Message on WhatsApp';
       const firstName = row.name.trim().split(/\s+/u)[0] || 'there';
-      const text = `Hi ${firstName}, we were introduced through Pilot Match. Would love to set up a quick call.`;
+      const text = `Hi ${firstName}, we were introduced through Besto. Would love to set up a quick call.`;
       message.href = 'https://wa.me/' + digits + '?text=' + encodeURIComponent(text); message.target = '_blank'; message.rel = 'noopener noreferrer'; message.referrerPolicy = 'no-referrer'; article.append(message);
     } else {
       const note = document.createElement('p'); note.className = 'connection-fact'; note.textContent = 'A WhatsApp number has not been saved yet.'; article.append(note);
@@ -64,7 +64,10 @@
       }
       revealNext(currentVersion);
     });
-    content.append(continueButton, note); dialog.replaceChildren(content);
+    content.append(continueButton, note);
+    const shell = document.createElement('div'); shell.className = 'reveal-shell';
+    shell.append(document.querySelector('body > .brand-header').cloneNode(true), content, document.querySelector('body > .brand-footer').cloneNode(true));
+    dialog.replaceChildren(shell);
     if (!dialog.open) dialog.showModal();
     content.querySelector('h1').focus({preventScroll: true}); dialog.scrollTop = 0;
     // Save only after the welcome has actually been painted, independently for each person.

@@ -1,0 +1,43 @@
+// Live static assets, fictional API replies. Never creates production searches or requests.
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const base=process.env.PILOT_TEST_ORIGIN||'https://neat-hyena-46.convex.site',out='C:/Users/reach/OneDrive/Documents/build-sprint-data/besto-branding-proof/'+(base.includes('first-guanaco')?'production':'dev');fs.mkdirSync(out,{recursive:true});
+(async()=>{
+const tab=await(await fetch('http://127.0.0.1:9222/json/new?about:blank',{method:'PUT'})).json(),ws=new WebSocket(tab.webSocketDebuggerUrl);await new Promise(r=>ws.addEventListener('open',r,{once:true}));let id=0,mode='landing';const tasks=new Map(),errors=[],proof=[];
+const send=(method,params={})=>new Promise((resolve,reject)=>{tasks.set(++id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
+const matches=[{operatorId:'example-one',score:93,why:'Manufacturing leadership fits the bottleneck pilot.',choice:null,response:null},{operatorId:'example-two',score:85,why:'Operations experience supports a focused pilot.',choice:null,response:null}];
+ws.addEventListener('message',({data})=>{const e=JSON.parse(data);if(e.id){const t=tasks.get(e.id);tasks.delete(e.id);e.error?t.reject(Error(e.error.message)):t.resolve(e.result);}if(e.method==='Runtime.exceptionThrown')errors.push(e.params.exceptionDetails.text);if(e.method==='Fetch.requestPaused')void(async()=>{const r=e.params,p=new URL(r.request.url).pathname;let body,status=200;
+if(p==='/api/founder')body={company:'Example Company',searchCount:0,searchLimit:3,searchesRemaining:3};
+else if(p==='/api/matches')body={ask:mode==='results'?'A manufacturing bottleneck pilot.':'',matches:mode==='results'?matches:[]};
+else if(p==='/api/operator/requests')body={requests:mode==='operator-requests'?[{requestId:'fictional-request',ask:'A manufacturing pilot to identify production bottlenecks.',requestedAt:1,response:null}]:[],isDone:true,continueCursor:''};
+else if(p==='/api/admin/requests')body={requests:[],isDone:true,continueCursor:''};
+else if(p==='/api/introductions/seen')body={seen:true};
+else if(p==='/api/introductions'){const role=JSON.parse(r.request.postData).role;body={introductions:mode.includes('reveal')||mode.includes('connection-card')?[{requestId:'fictional-request',requestedAt:1,welcome:'Welcome to your new connection. Start a conversation about your pilot on WhatsApp.',name:role==='founder'?'Nikhil Example':'Aruna Example',whatsappNumber:role==='founder'?'99955 50102':'+91 99955 50101',company:'Example Company',location:'Example City',seen:mode.includes('connection-card')}]:[],pending:false,isDone:true,continueCursor:''};}
+else throw Error('Unexpected endpoint: '+p);
+await send('Fetch.fulfillRequest',{requestId:r.requestId,responseCode:status,responseHeaders:[{name:'Content-Type',value:'application/json'}],body:Buffer.from(JSON.stringify(body)).toString('base64')});})().catch(e=>errors.push(e.message));});
+const evaluate=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw Error('Screen evaluation failed');return r.result.value;};
+const wait=async expression=>{for(let n=0;n<150;n++){if(await evaluate(expression))return;await new Promise(r=>setTimeout(r,100));}throw Error('Screen did not settle: '+expression);};
+try{await send('Page.enable');await send('Runtime.enable');await send('Network.enable');await send('Network.setCacheDisabled',{cacheDisabled:true});await send('Fetch.enable',{patterns:[{urlPattern:base+'/api/*',requestStage:'Request'}]});await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+for(const name of ['landing','ask','ask-no-link','results','operator-requests','founder-reveal','operator-reveal','founder-connection-card','operator-connection-card','admin','invalid-founder-link','invalid-operator-link','admin-denied']){
+mode=name;await send('Page.navigate',{url:'about:blank'});await wait('location.href==="about:blank"');let route='/',ready='!document.querySelector("#landing").hidden';
+if(name==='ask'||name==='results'||name.startsWith('founder-')){route='/?screen='+(name==='results'?'results':'ask')+'#f='+'a'.repeat(43);ready=name==='results'?'document.querySelectorAll("#match-cards article").length===2&&!document.querySelector("#matches").hidden':'document.querySelector("#ask")?.hidden===false';}
+if(name==='operator-requests'||name.startsWith('operator-')){route='/operator.html#o='+'a'.repeat(43);ready='document.querySelector(".panel")?.getAttribute("aria-busy")==="false"';}
+if(name==='admin'){route='/admin.html#a='+'a'.repeat(43);ready='document.querySelector("#admin-content")?.hidden===false';}
+if(name==='invalid-founder-link'){route='/#f=short';ready='document.querySelector("#link-title")?.textContent==="This personal link is not valid"';}
+if(name==='invalid-operator-link'){route='/operator.html#o=short';ready='document.querySelector("#requests-message")?.textContent.startsWith("This personal link is not valid.")';}
+if(name==='admin-denied'){route='/admin.html';ready='document.querySelector("#admin-message")?.textContent.startsWith("Access denied.")';}
+await send('Page.navigate',{url:base+route});await wait('document.readyState==="complete"');await wait(ready);
+await evaluate('new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');
+if(name==='ask-no-link'){await evaluate('document.querySelector("#open-ask").click()');await wait('document.querySelector("#ask").hidden===false');assert.equal(await evaluate('document.querySelector("#personal-link-guidance").hidden'),false);assert.equal(await evaluate('document.querySelector("#search").disabled'),true);}
+if(name.includes('reveal'))await wait('!!document.querySelector(".connection-reveal[open]")');
+if(name.includes('connection-card'))await wait('!!document.querySelector("#connections .connection-whatsapp")');
+await evaluate('document.fonts.ready');
+await evaluate('window.scrollTo(0,0); new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');
+const state=await evaluate(`(()=>{const d=document.querySelector('.connection-reveal[open]'),scope=d||document.body;return{width:innerWidth,wordmark:scope.querySelector('.brand-wordmark').textContent,promise:scope.querySelector('.brand-header p').textContent,footer:scope.querySelector('.brand-footer').textContent,headingSize:getComputedStyle(scope.querySelector('h1')).fontSize,overflow:document.documentElement.scrollWidth>innerWidth,headerOverflow:scope.querySelector('.brand-header').scrollWidth>scope.querySelector('.brand-header').clientWidth,font:getComputedStyle(scope).fontFamily,whatsapp:[...scope.querySelectorAll('.connection-whatsapp')].map(a=>({href:a.href,target:a.target}))}})()`);
+assert.equal(state.width,390);assert.equal(state.wordmark,'Besto');assert.equal(state.promise,'Warm pilot intros to senior operators.');assert.equal(state.footer,'Besto · Ask. Match. Meet.');assert.equal(state.headingSize,'20px');assert.equal(state.overflow,false);assert.equal(state.headerOverflow,false);assert.ok(state.font.includes('Inter'));
+for(const a of state.whatsapp){assert.ok(new URL(a.href).searchParams.get('text').includes('introduced through Besto.'));assert.equal(a.target,'_blank');}
+const shot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(out,name+'-390.png'),Buffer.from(shot.data,'base64'));
+if(!name.includes('reveal')){const metrics=await send('Page.getLayoutMetrics');const full=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip:{x:0,y:0,width:390,height:metrics.cssContentSize.height,scale:1}});fs.writeFileSync(path.join(out,name+'-390-full.png'),Buffer.from(full.data,'base64'));}
+proof.push({screen:name,...state,source:'deployed static assets; fictional intercepted API replies; no database or AI calls'});console.log(name+': Besto header/footer, 390px, Inter, no overflow passed.');
+}assert.deepEqual(errors,[]);fs.writeFileSync(path.join(out,'screen-proof.json'),JSON.stringify({origin:base,realApiCalls:0,errors,screens:proof},null,2));
+}finally{ws.close();await fetch('http://127.0.0.1:9222/json/close/'+tab.id);}
+})().catch(e=>{console.error(e.message);process.exitCode=1;});

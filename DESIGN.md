@@ -88,3 +88,6 @@ Button : Founder, enter your requirements
 \- No new colour or size without asking.
 
 \- Check every screen at phone width before saying done.
+
+## Approved Besto branding
+All screens use an Inter 20px Besto text wordmark and the exact 16px promise Warm pilot intros to senior operators. Shared non-navigating header and normal-flow footer: Besto / Ask. Match. Meet. Existing warm surfaces, near-black text, brown primary controls and red errors remain. All headings are 20px; fit scores remain 40px. Full-screen reveals include the same header/footer with buttons near the bottom; saved welcomes and private saved facts remain unchanged.
