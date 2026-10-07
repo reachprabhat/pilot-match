@@ -94,3 +94,11 @@ All screens use an Inter 20px Besto text wordmark and the exact 16px promise War
 
 ## Approved handshake logo update (supersedes the header above)
 Original geometric solid-fill handshake SVG with thin finger separations, dark brown #493426. Beside it: bold Inter 40px Besto in #493426; below Besto: Inter 16px Meet the best Operators in existing lighter brown #514a43. This is the only tagline; remove the previous Warm pilot intros promise everywhere. Existing shared footer, 20px headings, 40px fit scores, palette and all screen behavior remain.
+
+
+## Approved navy system and operator signup (supersedes brown palette)
+Shared tokens in styles.css: accent #142D4E, lighter tagline #49627D, hover #1E416B, ink #20262E, muted/placeholder #52647A, line #CDD5DF, disabled #E2E7ED. Preserve cream background #f5f2ec, surface #faf8f4 and red errors #a32720. WhatsApp is #25D366 with white text, explicitly requested by owner. All screens use the same tokens, Inter fonts and original geometric handshake.
+
+Phone header: original SVG viewBox cropped to 0 12 96 60, 116px wide by 72px tall at 390px; visible handshake taller than the 64px name/tagline block. Besto is 40px bold with 40px line height, sole tagline Meet the best Operators is 16px/20px with 4px gap. Lockup gap 12px, phone edges 16px, header padding bottom 12px. Keep existing shared footer. Ask textarea is 192px on phones, scrolls internally, preserves full ask; Search visible in a 390x844 viewport.
+
+Signup at /signup.html: paired identity/contact fields, full-width revenue dropdown, two wrapping checkbox chip groups capped at three, exact required consent, Submit for approval. Input order/copy and vocabulary follow the approved plan. Source of both chip lists and revenue ranges is convex/lib/operatorApplication.ts; the page reads public vocabulary only. Pending/Approved status is saved separately from existing operators. Private admin adds a Pending operators section without replacing meeting sections. Existing owner personal-link generation and manual sharing remain unchanged.

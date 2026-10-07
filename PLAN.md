@@ -48,3 +48,9 @@ Complete: Besto branding dev tested, deployed, and all live 390px screen states 
 Owner approved dev then deploy: original geometric handshake, large dark brown Besto wordmark, sole tagline Meet the best Operators. No other screen or data-flow change; capture all live screens at 390px.
 
 Complete: original handshake and sole tagline dev verified, deployed, all live screen states captured at 390px; production data unchanged.
+
+
+## Approved extension: operator signup and navy branding (dev only)
+Owner approved the public operator signup plan, navy palette and compact shared header. WhatsApp buttons stay #25D366 with white text. New applications are Pending in a separate table; only private-admin approval inserts a new operator into the existing matching table. Identity/contact fields and consent required; each vocabulary chip list allows zero to three selections. Existing profiles, links, matching/scoring, quota, meeting flows and Accepted-only contact access stay unchanged. Production deployment is not authorised for this extension.
+
+Dev complete: real signup and approval walked in browser, Pending excluded from matching, approval replay inserts no duplicate, denied admin cannot read/approve. 390px signup, Ask and both reveal screenshots captured. Next: owner reviews the dev site on their phone.

@@ -1,0 +1,24 @@
+export const pilotPreferences = ["Food", "Glassware", "Electrical goods", "Automotive safety", "Automobile manufacturing", "Alcoholic beverages", "Digital healthcare", "Stainless steel", "Office furniture"];
+export const helpAreas = ["Raw material costs", "Energy costs", "Packaging costs", "Supply chain disruptions", "Shipping disruptions", "Currency swings", "Regulatory shifts", "Physical impacts", "Seasonal sales", "Geopolitical uncertainty", "Competition", "Working capital"];
+export const revenueRanges = ["Below ₹1 crore", "₹1–less than ₹10 crore", "₹10–less than ₹50 crore", "₹50–less than ₹100 crore", "₹100–less than ₹500 crore", "₹500–less than ₹1,000 crore", "₹1,000 crore or more", "Prefer not to disclose"];
+export const consentText = "I agree founders I accept can see my name and WhatsApp.";
+export type ApplicationInput = {name:string;company:string;role:string;city:string;whatsapp:string;linkedin:string;revenue:string;preferences:string[];areas:string[];consent:boolean};
+export function validateApplication(input:unknown):ApplicationInput {
+  if(!input || typeof input!=="object" || Array.isArray(input))throw Error("Check your answers and try again.");
+  const body=input as Record<string,unknown>;
+  const text=(key:string,max:number)=>{const value=body[key];if(typeof value!=="string" || !value.trim() || value.trim().length>max || /[\u0000-\u001f]/.test(value))throw Error("Enter a valid "+key+".");return value.trim();};
+  const name=text("name",100),company=text("company",160),role=text("role",160),city=text("city",100),whatsapp=text("whatsapp",40),linkedin=text("linkedin",300),revenue=text("revenue",100);
+  const digits=whatsapp.replace(/\D/g,"");if(!/^[+\d\s().-]+$/.test(whatsapp)||digits.length<10||digits.length>15)throw Error("Enter a WhatsApp number with 10 to 15 digits.");
+  let url:URL;try{url=new URL(linkedin);}catch{throw Error("Enter a LinkedIn profile URL.");}
+  if(url.protocol!=="https:"||!['linkedin.com','www.linkedin.com'].includes(url.hostname)||!/^\/in\/[^/]+\/?$/.test(url.pathname)||url.username||url.password||url.search||url.hash)throw Error("Enter a LinkedIn profile URL starting with https://www.linkedin.com/in/.");
+  if(!revenueRanges.includes(revenue))throw Error("Choose a revenue range.");
+  const chips=(key:string,allowed:string[])=>{const values=body[key];if(!Array.isArray(values)||values.length>3||values.some(value=>typeof value!=="string"||!allowed.includes(value))||new Set(values).size!==values.length)throw Error("Choose up to 3 valid "+key+".");return values as string[];};
+  if(body.consent!==true)throw Error("Tick the consent box to submit.");
+  return {name,company,role,city,whatsapp,linkedin:url.href,revenue,preferences:chips("preferences",pilotPreferences),areas:chips("areas",helpAreas),consent:true};
+}
+export function matchingProfile(input:ApplicationInput) {
+  return {name:input.name,company:input.company,currentRole:input.role,headline:input.role,location:input.city,whatsappNumber:input.whatsapp,sourceLink:input.linkedin,
+    revenueBand:input.revenue==="Prefer not to disclose"?"not found":input.revenue,
+    industry:input.preferences.length?"Pilot preferences: "+input.preferences.join("; "):"not found",
+    about:input.areas.length?"Areas I can help with: "+input.areas.join("; "):"not found",companyProblems:"not found"};
+}

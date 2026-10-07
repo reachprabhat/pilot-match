@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#142D4E"><meta name="referrer" content="no-referrer"><title>Join Besto as an operator</title><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/signup.css"><script src="/signup.js" defer></script></head><body>
+    <header class="brand-header"><div class="brand-lockup"><svg xmlns="http://www.w3.org/2000/svg" width="116" height="72" viewBox="0 12 96 60" aria-hidden="true"><g fill="currentColor"><path d="M0 28 14 12 28 25 13 44Z"/><path d="M96 28 82 12 68 25 83 44Z"/><path d="M17 30 31 18H43L75 49 75 55 68 62 62 67 55 71 49 69 24 45Z"/><path d="M79 30 65 18H53L33 33 33 37 38 41 42 40 51 33 73 54 82 43Z"/></g><g fill="none" stroke="var(--surface)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M49 43 69 62M43 50 61 67M37 57 51 70M14 43 27 26M82 43 69 26M33 33 33 37 38 41 42 40 51 33 73 54"/></g></svg><div><strong class="brand-wordmark">Besto</strong><p>Meet the best Operators</p></div></div></header>
+<main><section class="panel signup-panel" aria-labelledby="signup-title"><h1 id="signup-title" tabindex="-1">Join Besto as an operator</h1>
+<form id="signup-form" hidden><div class="signup-grid">
+<div class="signup-field"><label for="name">Name</label><input id="name" name="name" autocomplete="name" placeholder="Your name" maxlength="100" required></div>
+<div class="signup-field"><label for="company">Company</label><input id="company" name="company" autocomplete="organization" placeholder="Company name" maxlength="160" required></div>
+<div class="signup-field"><label for="role">Role</label><input id="role" name="role" autocomplete="organization-title" placeholder="Current role" maxlength="160" required></div>
+<div class="signup-field"><label for="city">City</label><input id="city" name="city" autocomplete="address-level2" placeholder="Your city" maxlength="100" required></div>
+<div class="signup-field"><label for="whatsapp">WhatsApp</label><input id="whatsapp" name="whatsapp" type="tel" autocomplete="tel" placeholder="+91…" maxlength="40" required></div>
+<div class="signup-field"><label for="linkedin">LinkedIn URL</label><input id="linkedin" name="linkedin" type="url" autocomplete="url" placeholder="https://…" maxlength="300" required></div>
+</div><div class="signup-field signup-wide"><label for="revenue">Latest annual revenue</label><select id="revenue" name="revenue" required></select></div>
+<fieldset aria-describedby="preferences-note"><legend>Pilot preferences</legend><p class="chip-note" id="preferences-note">Choose up to 3 · 0 selected</p><div class="signup-chips" id="preferences"></div></fieldset>
+<fieldset aria-describedby="areas-note"><legend>Areas I can help with</legend><p class="chip-note" id="areas-note">Choose up to 3 · 0 selected</p><div class="signup-chips" id="areas"></div></fieldset>
+<label class="signup-consent"><input type="checkbox" name="consent" required><span>I agree founders I accept can see my name and WhatsApp.</span></label>
+<button class="primary" id="signup-submit" type="submit" disabled>Submit for approval</button></form>
+<p id="signup-message" role="status">Loading signup...</p><button class="secondary" id="signup-retry" type="button" hidden>Try again</button></section></main>
+    <footer class="brand-footer">Besto · Ask. Match. Meet.</footer>
+</body></html>

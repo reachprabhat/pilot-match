@@ -1,8 +1,13 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import * as applications from "./operatorApplicationHttp";
 
 const http=httpRouter();
+http.route({path:"/operator-signup/options",method:"GET",handler:applications.options});
+http.route({path:"/operator-signup",method:"POST",handler:applications.submit});
+http.route({path:"/admin/operator-applications",method:"POST",handler:applications.admin});
+http.route({path:"/admin/operator-applications/approve",method:"POST",handler:applications.admin});
 for(const path of ["/introductions","/introductions/seen"]){
   http.route({path,method:"POST",handler:httpAction(async(ctx,request)=>{
     const headers={"Content-Type":"application/json","Cache-Control":"no-store","Referrer-Policy":"no-referrer"};

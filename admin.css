@@ -12,9 +12,18 @@
 #admin-content li { line-height: 1.6; overflow-wrap: anywhere; }
 #admin-content li + li { margin-top: 8px; }
 #admin-message { margin-bottom: 24px; }
-#admin-message.error { color: #a32720; }
+#admin-message.error { color: var(--error); }
 #admin-more { width: 100%; margin-top: 32px; }
 #admin-refresh { width: 100%; margin-top: 32px; }
+#applications-section { margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--line); }
+#applications-section article { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--line); }
+#applications-section dl { margin: 0; }
+#applications-section dt { font-weight: 600; line-height: 1.6; margin-top: 16px; }
+#applications-section dd { margin: 4px 0 0; line-height: 1.6; overflow-wrap: anywhere; }
+#applications-section p { margin: 16px 0 0; overflow-wrap: anywhere; }
+#applications-section button { margin-top: 24px; }
+#applications-more, #applications-refresh { width: 100%; }
+#applications-message.error { color: var(--error); }
 @media (max-width: 600px) {
   .admin-panel { min-height: min(640px, calc(100svh - 220px)); }
   #admin-refresh { margin-top: auto; }

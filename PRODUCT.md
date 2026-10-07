@@ -125,3 +125,7 @@ What changed in the plan: No changes after 1st test.
 11. I, as a founder, can close it, reopen it, and my data is still there.
 12: I, as a operator, can close it, reopen it, and my data is still there.
 
+
+
+## Approved extension: public operator applications
+Dev-only extension: operators submit name, company, role, city, WhatsApp, LinkedIn profile URL, self-reported annual INR revenue band, up to three pilot preferences, up to three help areas and required contact-sharing consent. Applications are Pending until the owner approves from the existing private admin link. Only approval inserts a new operator into the existing matching table. Pilot preferences map to industry, help capabilities to about; companyProblems stays not found. No automatic enrichment, no signup AI calls and no login. Existing operators and all personal links are preserved. Participant contacts remain restricted to each Accepted pair.

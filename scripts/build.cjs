@@ -15,6 +15,10 @@ const files = [
   'admin.html',
   'admin.css',
   'admin.js',
+  'admin-applications.js',
+  'signup.html',
+  'signup.css',
+  'signup.js',
   'fonts/inter-regular.ttf',
   'fonts/inter-semibold.ttf',
   'fonts/LICENSE.txt',
@@ -23,9 +27,9 @@ const files = [
 for (const file of files) {
   const output = path.join(root, 'dist', file);
   fs.mkdirSync(path.dirname(output), { recursive: true });
-  if (file === 'index.html' || file === 'operator.html' || file === 'admin.html') {
+  if (file.endsWith('.html')) {
     let html = fs.readFileSync(path.join(root, file), 'utf8');
-    for (const asset of file === 'index.html' ? ['styles.css', 'app.js', 'connections.css', 'connections.js'] : file === 'operator.html' ? ['styles.css', 'operator.css', 'operator.js', 'connections.css', 'connections.js'] : ['styles.css', 'admin.css', 'admin.js']) {
+    for (const asset of file === 'index.html' ? ['styles.css', 'app.js', 'connections.css', 'connections.js'] : file === 'operator.html' ? ['styles.css', 'operator.css', 'operator.js', 'connections.css', 'connections.js'] : file === 'signup.html' ? ['styles.css', 'signup.css', 'signup.js'] : ['styles.css', 'admin.css', 'admin.js', 'admin-applications.js']) {
       const version = crypto.createHash('sha256').update(fs.readFileSync(path.join(root, asset))).digest('hex').slice(0, 12);
       html = html.replace(`"/${asset}"`, `"/${asset}?v=${version}"`);
     }

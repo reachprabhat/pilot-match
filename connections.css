@@ -1,6 +1,6 @@
 #connections { width: min(100%, 680px); margin-bottom: 24px; }
 html:has(.connection-reveal[open]) { overflow: hidden; }
-.connection-card { padding: 24px; border: 1px solid var(--line); border-radius: 16px; background: #faf8f4; overflow-wrap: anywhere; }
+.connection-card { padding: 24px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); overflow-wrap: anywhere; }
 .connection-card + .connection-card { margin-top: 24px; }
 .connection-card h2 { font-size: 20px; line-height: 1.4; margin: 0 0 16px; }
 .connection-card p { margin: 0; }
@@ -9,9 +9,10 @@ html:has(.connection-reveal[open]) { overflow: hidden; }
 .connection-phone { font-variant-numeric: tabular-nums; }
 .connection-card .connection-fact { margin-top: 8px; }
 .connection-whatsapp { display: block; text-align: center; text-decoration: none; min-height: 48px; margin-top: 32px; }
-.connection-whatsapp:hover { filter: brightness(1.15); }
-.connection-reveal { position: fixed; inset: 0; width: 100%; max-width: none; height: 100%; max-height: none; margin: 0; padding: 32px 24px; border: 0; color: #26231f; background: #faf8f4; overflow-y: auto; }
-.connection-reveal::backdrop { background: #faf8f4; }
+.primary.connection-whatsapp { background: var(--whatsapp); color: var(--white); }
+.primary.connection-whatsapp:hover { background: var(--whatsapp); filter: brightness(.95); }
+.connection-reveal { position: fixed; inset: 0; width: 100%; max-width: none; height: 100%; max-height: none; margin: 0; padding: 32px 24px; border: 0; color: var(--ink); background: var(--surface); overflow-y: auto; }
+.connection-reveal::backdrop { background: var(--surface); }
 .reveal-shell { display: flex; flex-direction: column; min-height: 100%; width: min(100%, 600px); margin: 0 auto; }
 .connection-reveal .brand-header { width: 100%; margin: 0 0 32px; }
 .connection-reveal .brand-footer { width: 100%; margin: 24px 0 0; }
@@ -20,9 +21,9 @@ html:has(.connection-reveal[open]) { overflow: hidden; }
 .connection-reveal h1:focus { outline: none; }
 .connection-reveal .connection-whatsapp { margin-top: auto; }
 .connection-continue { width: 100%; margin-top: 16px; }
-.connection-card .connection-note { margin-top: 16px; color: #a32720; }
+.connection-card .connection-note { margin-top: 16px; color: var(--error); }
 @media (max-width: 600px) {
-  .connection-reveal { padding: 32px 24px; padding-top: max(32px, env(safe-area-inset-top)); padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+  .connection-reveal { padding: 16px; padding-top: max(16px, env(safe-area-inset-top)); padding-bottom: max(16px, env(safe-area-inset-bottom)); }
   .connection-reveal .connection-whatsapp { margin-top: auto; }
   .connection-reveal .connection-fact:last-of-type { margin-bottom: 32px; }
 }
