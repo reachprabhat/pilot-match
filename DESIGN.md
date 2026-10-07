@@ -106,3 +106,6 @@ Signup at /signup.html: paired identity/contact fields, full-width revenue dropd
 
 ## Signup refinement
 Your industry replaces Pilot preferences: the same vocabulary rendered as a required single-choice radio chip group, with Choose exactly one guidance. Areas I can help with retains checkbox chips and the existing three-choice cap. Immediately below it, optional Any other pain points you have textarea, 112px initial height, maxlength 200, and Optional / Maximum 200 characters guidance. Existing colors, header, form spacing and consent unchanged.
+
+
+Other industry chip: final radio option in the existing Your industry group. Reveal a full-width Your industry (Other) text input immediately below the chips only when selected. Native maxlength 50, required for Other, disabled/hidden for ordinary chips, with Maximum 50 characters helper. Existing typography, navy tokens, spacing, help areas, pain-points box and consent unchanged.

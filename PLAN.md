@@ -58,3 +58,7 @@ Dev complete: real signup and approval walked in browser, Pending excluded from 
 
 ## Approved signup refinement (dev only)
 Rename Pilot preferences to Your industry and require exactly one choice for new applications. Keep help areas unchanged. Add optional Any other pain points you have, maximum 200 characters, mapped on approval to the existing companyProblems field matching reads. Existing operators, matching logic, approval flow and production remain unchanged. Older Pending applications retain their prior industry selections and approval behavior. Dev browser proof and data comparison complete; phone review next.
+
+
+## Approved Other industry option (dev only)
+Keep exactly one Your industry choice and add Other. Selecting Other reveals a required short text field capped at 50 characters; approval saves its trimmed value in the existing industry field. Help areas and optional 200-character companyProblems mapping remain unchanged. Owner explicitly authorised a fictional Fashion E-commerce signup and approval. Existing operators, matching logic, approval flow and production unchanged.

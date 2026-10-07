@@ -25,7 +25,7 @@ export const list=internalQuery({
     const operators=await ctx.db.query("operators").withIndex("by_operator_id").take(501);
     const phone=(s:string)=>{const digits=s.replace(/\D/g,"");return digits.length===10?"91"+digits:digits;};
     const linkedin=(s:string)=>s.toLowerCase().replace(/\/$/,"");
-    return {applications:page.page.map(row=>({applicationId:row._id,name:row.name,company:row.company,role:row.role,city:row.city,whatsapp:row.whatsapp,linkedin:row.linkedin,revenue:row.revenue,preferences:row.preferences,areas:row.areas,painPoints:row.painPoints??"",consent:row.consent,status:"Pending" as const,consentedAt:row.consentedAt,consentText:row.consentText,
+    return {applications:page.page.map(row=>({applicationId:row._id,name:row.name,company:row.company,role:row.role,city:row.city,whatsapp:row.whatsapp,linkedin:row.linkedin,revenue:row.revenue,preferences:row.preferences,industryOther:row.industryOther??"",areas:row.areas,painPoints:row.painPoints??"",consent:row.consent,status:"Pending" as const,consentedAt:row.consentedAt,consentText:row.consentText,
       possibleDuplicate:operators.some(op=>phone(op.whatsappNumber)===phone(row.whatsapp)||linkedin(op.sourceLink)===linkedin(row.linkedin))})),continueCursor:page.continueCursor,isDone:page.isDone};
   },
 });

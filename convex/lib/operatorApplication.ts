@@ -1,8 +1,8 @@
-export const pilotPreferences = ["Food", "Glassware", "Electrical goods", "Automotive safety", "Automobile manufacturing", "Alcoholic beverages", "Digital healthcare", "Stainless steel", "Office furniture"];
+export const pilotPreferences = ["Food", "Glassware", "Electrical goods", "Automotive safety", "Automobile manufacturing", "Alcoholic beverages", "Digital healthcare", "Stainless steel", "Office furniture", "Other"];
 export const helpAreas = ["Raw material costs", "Energy costs", "Packaging costs", "Supply chain disruptions", "Shipping disruptions", "Currency swings", "Regulatory shifts", "Physical impacts", "Seasonal sales", "Geopolitical uncertainty", "Competition", "Working capital"];
 export const revenueRanges = ["Below ₹1 crore", "₹1–less than ₹10 crore", "₹10–less than ₹50 crore", "₹50–less than ₹100 crore", "₹100–less than ₹500 crore", "₹500–less than ₹1,000 crore", "₹1,000 crore or more", "Prefer not to disclose"];
 export const consentText = "I agree founders I accept can see my name and WhatsApp.";
-export type ApplicationInput = {name:string;company:string;role:string;city:string;whatsapp:string;linkedin:string;revenue:string;preferences:string[];areas:string[];consent:boolean;painPoints?:string};
+export type ApplicationInput = {name:string;company:string;role:string;city:string;whatsapp:string;linkedin:string;revenue:string;preferences:string[];areas:string[];consent:boolean;painPoints?:string;industryOther?:string};
 export function validateApplication(input:unknown,legacyIndustry=false):ApplicationInput {
   if(!input || typeof input!=="object" || Array.isArray(input))throw Error("Check your answers and try again.");
   const body=input as Record<string,unknown>;
@@ -16,12 +16,15 @@ export function validateApplication(input:unknown,legacyIndustry=false):Applicat
   if(body.consent!==true)throw Error("Tick the consent box to submit.");
   const preferences=chips("preferences",pilotPreferences);
   if(!legacyIndustry&&preferences.length!==1)throw Error("Choose exactly one industry.");
+  if(body.industryOther!==undefined&&(typeof body.industryOther!=="string"||body.industryOther.length>50||/[\u0000-\u001f]/.test(body.industryOther)))throw Error("Keep your industry within 50 characters.");
+  const industryOther=preferences.includes("Other")?((body.industryOther as string|undefined)??"").trim():"";
+  if(preferences.includes("Other")&&!industryOther)throw Error("Enter your industry when choosing Other.");
   if(body.painPoints!==undefined&&(typeof body.painPoints!=="string"||body.painPoints.length>200||/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(body.painPoints)))throw Error("Keep pain points within 200 characters.");
-  return {name,company,role,city,whatsapp,linkedin:url.href,revenue,preferences,areas:chips("areas",helpAreas),consent:true,painPoints:((body.painPoints as string|undefined)??"").trim()};
+  return {name,company,role,city,whatsapp,linkedin:url.href,revenue,preferences,industryOther,areas:chips("areas",helpAreas),consent:true,painPoints:((body.painPoints as string|undefined)??"").trim()};
 }
 export function matchingProfile(input:ApplicationInput,legacyIndustry=false) {
   return {name:input.name,company:input.company,currentRole:input.role,headline:input.role,location:input.city,whatsappNumber:input.whatsapp,sourceLink:input.linkedin,
     revenueBand:input.revenue==="Prefer not to disclose"?"not found":input.revenue,
-    industry:input.preferences.length?(legacyIndustry?"Pilot preferences: ":"")+input.preferences.join("; "):"not found",
+    industry:input.preferences[0]==="Other"?input.industryOther!:input.preferences.length?(legacyIndustry?"Pilot preferences: ":"")+input.preferences.join("; "):"not found",
     about:input.areas.length?"Areas I can help with: "+input.areas.join("; "):"not found",companyProblems:input.painPoints?.trim()||"not found"};
 }

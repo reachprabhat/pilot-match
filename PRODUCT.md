@@ -132,3 +132,6 @@ Dev-only extension: operators submit name, company, role, city, WhatsApp, Linked
 
 
 Signup refinement: new applicants choose exactly one Your industry entry, saved on approval in the existing industry field. Optional pain points up to 200 characters are saved in the application and mapped to companyProblems on approval; blank means not found. Help areas continue mapping to about, not to companyProblems. Existing matching reads both fields without logic changes. Pending-to-approved owner flow unchanged; old applications remain approvable without editing their records. Dev only.
+
+
+Other industry: applicants choose one predefined chip or Other with nonblank text up to 50 characters. Save the choice and custom text in the Pending application; on owner approval, industry stores the chosen predefined label or exact trimmed custom text. No matching function change or existing profile migration. Help capabilities remain about; optional declared pain points remain companyProblems, capped at 200 characters. Dev only.
