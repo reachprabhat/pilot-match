@@ -32,3 +32,7 @@
 Dev verified; owner authorised dev proof followed by production deployment. Save one AI welcome per accepted request, show each person a first full-screen view and later card, and restrict contacts to the accepted pair. Hide on Not relevant.
 
 Complete: Accepted connection reveal shipped and live-verified; original milestone 12/13 scope remains unchanged.
+
+## Approved extension: WhatsApp message link
+
+Dev verified; authorised for deployment. Clean the saved number, add 91 only for ten digits, and open a new tab with the specified first-name greeting prefilled. Layout and contact access stay unchanged. Native phone-app screenshot requires the owner phone.

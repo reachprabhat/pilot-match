@@ -32,10 +32,13 @@
     for (const field of ['company', 'location']) if (row[field]) {
       const fact = document.createElement('p'); fact.className = 'connection-fact'; fact.textContent = row[field]; article.append(fact);
     }
-    const digits = row.whatsappNumber.replace(/\D/g, '');
+    const savedDigits = row.whatsappNumber.replace(/\D/g, '');
+    const digits = savedDigits.length === 10 ? '91' + savedDigits : savedDigits;
     if (digits.length >= 7 && digits.length <= 15) {
       const message = document.createElement('a'); message.className = 'primary connection-whatsapp'; message.textContent = 'Message on WhatsApp';
-      message.href = 'https://wa.me/' + digits; message.target = '_blank'; message.rel = 'noopener noreferrer'; message.referrerPolicy = 'no-referrer'; article.append(message);
+      const firstName = row.name.trim().split(/\s+/u)[0] || 'there';
+      const text = `Hi ${firstName}, we were introduced through Pilot Match. Would love to set up a quick call.`;
+      message.href = 'https://wa.me/' + digits + '?text=' + encodeURIComponent(text); message.target = '_blank'; message.rel = 'noopener noreferrer'; message.referrerPolicy = 'no-referrer'; article.append(message);
     } else {
       const note = document.createElement('p'); note.className = 'connection-fact'; note.textContent = 'A WhatsApp number has not been saved yet.'; article.append(note);
     }

@@ -1,6 +1,6 @@
 // Browser checks use invented data and intercept every API call; no database/AI writes.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
-const base='https://neat-hyena-46.convex.site',out='C:/Users/reach/OneDrive/Documents/build-sprint-data/accepted-reveal-proof/browser-checks';fs.mkdirSync(out,{recursive:true});
+const base=process.env.PILOT_TEST_ORIGIN||'https://neat-hyena-46.convex.site',out='C:/Users/reach/OneDrive/Documents/build-sprint-data/whatsapp-message-proof/'+(base.includes('first-guanaco')?'production':'dev');fs.mkdirSync(out,{recursive:true});
 (async()=>{
  const tab=await(await fetch('http://127.0.0.1:9222/json/new?about:blank',{method:'PUT'})).json(),ws=new WebSocket(tab.webSocketDebuggerUrl);await new Promise(r=>ws.addEventListener('open',r,{once:true}));let id=0,accepted=true,failed=false,hold=false;const seen={founder:false,operator:false},pending=new Map(),held=[],errors=[];
  const send=(method,params={})=>new Promise((resolve,reject)=>{pending.set(++id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
@@ -14,7 +14,7 @@ const base='https://neat-hyena-46.convex.site',out='C:/Users/reach/OneDrive/Docu
   if(p!=='/api/introductions')throw Error('Unexpected write: '+p);
   if(hold){held.push(r.requestId);return;}
   if(failed)return reply(r.requestId,503,{});
-  const row={requestId:'fictional-request',requestedAt:1,welcome:'Welcome to your connection. Start a conversation on WhatsApp.',name:b.role==='founder'?'Example Operator':'Example Founder',whatsappNumber:'+19995550101',...(b.role==='founder'?{company:'Example Factory',location:'Example City'}:{}),seen:seen[b.role]};
+  const row={requestId:'fictional-request',requestedAt:1,welcome:'Welcome to your connection. Start a conversation on WhatsApp.',name:b.role==='founder'?'Nikhil Example':'Aruna Example',whatsappNumber:b.role==='founder'?'(999) 555-0102':'+91 99955 50101',...(b.role==='founder'?{company:'Example Factory',location:'Example City'}:{}),seen:seen[b.role]};
   return reply(r.requestId,200,{introductions:accepted&&b.code==='a'.repeat(43)?[row]:[],pending:false,isDone:true,continueCursor:''});
  })().catch(error=>errors.push(error.message));});
  const evaluate=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw Error('Browser evaluation failed');return r.result.value;};
@@ -25,10 +25,14 @@ const base='https://neat-hyena-46.convex.site',out='C:/Users/reach/OneDrive/Docu
   for(const [label,width,height,mobile]of[['desktop',1280,900,false],['390',390,844,true],['320',320,740,true]])for(const role of ['founder','operator']){
    seen[role]=false;accepted=true;await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile});await navigate(role);await wait('!!document.querySelector(".connection-reveal[open] .connection-whatsapp")');
    const facts=await evaluate('(()=>{const d=document.querySelector(".connection-reveal"),r=d.getBoundingClientRect(),b=d.querySelector(".connection-whatsapp").getBoundingClientRect();return {width:r.width,height:r.height,buttonBottom:b.bottom,overflow:document.documentElement.scrollWidth>innerWidth,facts:d.querySelectorAll(".connection-fact").length,phoneWeight:getComputedStyle(d.querySelector(".connection-phone strong")).fontWeight,nameWeight:getComputedStyle(d.querySelector(".connection-name strong")).fontWeight,active:document.activeElement.id,href:d.querySelector("a").href}})()');
-   assert.equal(facts.width,width);assert.equal(facts.height,height);assert.ok(facts.buttonBottom<=height);assert.equal(facts.overflow,false);assert.equal(facts.facts,role==='operator'?0:2);assert.equal(facts.phoneWeight,'700');assert.equal(facts.nameWeight,'700');assert.equal(facts.active,'connection-title');assert.equal(facts.href,'https://wa.me/19995550101');
+   assert.equal(facts.width,width);assert.equal(facts.height,height);assert.ok(facts.buttonBottom<=height);assert.equal(facts.overflow,false);assert.equal(facts.facts,role==='operator'?0:2);assert.equal(facts.phoneWeight,'700');assert.equal(facts.nameWeight,'700');assert.equal(facts.active,'connection-title');
+   const expectedMessage='Hi '+(role==='founder'?'Nikhil':'Aruna')+', we were introduced through Pilot Match. Would love to set up a quick call.';
+   assert.equal(facts.href,'https://wa.me/'+(role==='founder'?'919995550102':'919995550101')+'?text='+encodeURIComponent(expectedMessage));
+   assert.equal(await evaluate('document.querySelector(".connection-reveal a").target'),'_blank');
+   if(label==='390')fs.writeFileSync(path.join(out,role+'-exact-link.json'),JSON.stringify({role,profileData:'invented browser fixture',href:facts.href,message:new URL(facts.href).searchParams.get('text'),target:'_blank'},null,2));
    const shot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(out,role+'-reveal-'+label+'.png'),Buffer.from(shot.data,'base64'));
    await wait('document.querySelector(".connection-reveal[open]")!==null');await evaluate('document.querySelector(".connection-continue").click()');await wait('!document.querySelector(".connection-reveal[open]")');assert.equal(await evaluate('document.querySelectorAll("#connections .connection-card").length'),1);
-   await send('Page.reload',{ignoreCache:true});await wait('!!document.querySelector("#connections .connection-whatsapp")');assert.equal(await evaluate('!!document.querySelector(".connection-reveal[open]")'),false);
+   await send('Page.reload',{ignoreCache:true});await wait('!!document.querySelector("#connections .connection-whatsapp")');assert.equal(await evaluate('!!document.querySelector(".connection-reveal[open]")'),false);assert.equal(await evaluate('document.querySelector("#connections .connection-whatsapp").href'),facts.href);
    accepted=false;await evaluate('window.dispatchEvent(new Event("connection-status-changed"))');await wait('document.querySelector("#connections").hidden');assert.equal(await evaluate('document.querySelector("#connections").textContent'),'', 'decline removes all contacts');
    accepted=true;await navigate(role,'b'.repeat(43));await wait('document.querySelector("#connections")?.hidden');assert.equal(await evaluate('document.querySelectorAll(".connection-name").length'),0);
    console.log(role+' '+label+': full-screen reveal, bold contacts, saved optional facts, WhatsApp link, first view/reload card, decline and other-link privacy passed.');
