@@ -14,7 +14,7 @@ const base=process.env.PILOT_TEST_ORIGIN||'https://neat-hyena-46.convex.site',ou
   if(p!=='/api/introductions')throw Error('Unexpected write: '+p);
   if(hold){held.push(r.requestId);return;}
   if(failed)return reply(r.requestId,503,{});
-  const row={requestId:'fictional-request',requestedAt:1,welcome:'Welcome to your connection. Start a conversation on WhatsApp.',name:b.role==='founder'?'Nikhil Example':'Aruna Example',whatsappNumber:b.role==='founder'?'(999) 555-0102':'+91 99955 50101',...(b.role==='founder'?{company:'Example Factory',location:'Example City'}:{}),seen:seen[b.role]};
+  const row={senderName:b.role==='founder'?'Aruna Example':'Nikhil Example',senderCompany:b.role==='founder'?'Example Company':'Example Factory',requestId:'fictional-request',requestedAt:1,welcome:'Welcome to your connection. Start a conversation on WhatsApp.',name:b.role==='founder'?'Nikhil Example':'Aruna Example',whatsappNumber:b.role==='founder'?'(999) 555-0102':'+91 99955 50101',...(b.role==='founder'?{company:'Example Factory',location:'Example City'}:{}),seen:seen[b.role]};
   return reply(r.requestId,200,{introductions:accepted&&b.code==='a'.repeat(43)?[row]:[],pending:false,isDone:true,continueCursor:''});
  })().catch(error=>errors.push(error.message));});
  const evaluate=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw Error('Browser evaluation failed');return r.result.value;};
@@ -26,8 +26,8 @@ const base=process.env.PILOT_TEST_ORIGIN||'https://neat-hyena-46.convex.site',ou
    seen[role]=false;accepted=true;await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile});await navigate(role);await wait('!!document.querySelector(".connection-reveal[open] .connection-whatsapp")');
    const facts=await evaluate('(()=>{const d=document.querySelector(".connection-reveal"),r=d.getBoundingClientRect(),b=d.querySelector(".connection-whatsapp").getBoundingClientRect();return {width:r.width,height:r.height,buttonBottom:b.bottom,overflow:document.documentElement.scrollWidth>innerWidth,facts:d.querySelectorAll(".connection-fact").length,phoneWeight:getComputedStyle(d.querySelector(".connection-phone strong")).fontWeight,nameWeight:getComputedStyle(d.querySelector(".connection-name strong")).fontWeight,active:document.activeElement.id,href:d.querySelector("a").href}})()');
    assert.equal(facts.width,width);assert.equal(facts.height,height);assert.ok(facts.buttonBottom<=height);assert.equal(facts.overflow,false);assert.equal(facts.facts,role==='operator'?0:2);assert.equal(facts.phoneWeight,'700');assert.equal(facts.nameWeight,'700');assert.equal(facts.active,'connection-title');
-   const expectedMessage='Hi '+(role==='founder'?'Nikhil':'Aruna')+', we were introduced through Besto. Would love to set up a quick call.';
-   assert.equal(facts.href,'https://wa.me/'+(role==='founder'?'919995550102':'919995550101')+'?text='+encodeURIComponent(expectedMessage));
+   const expectedMessage='Hi '+(role==='founder'?'Nikhil':'Aruna')+", I'm "+(role==='founder'?'Aruna Example from Example Company':'Nikhil Example from Example Factory')+'. We were introduced through Besto. Would love to set up a quick call.';
+   assert.equal(new URL(facts.href).origin,'https://wa.me');assert.equal(new URL(facts.href).pathname,'/'+(role==='founder'?'919995550102':'919995550101'));assert.equal(new URL(facts.href).searchParams.get('text'),expectedMessage);
    assert.equal(await evaluate('document.querySelector(".connection-reveal a").target'),'_blank');
    if(label==='390')fs.writeFileSync(path.join(out,role+'-exact-link.json'),JSON.stringify({role,profileData:'invented browser fixture',href:facts.href,message:new URL(facts.href).searchParams.get('text'),target:'_blank'},null,2));
    const shot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(path.join(out,role+'-reveal-'+label+'.png'),Buffer.from(shot.data,'base64'));

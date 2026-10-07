@@ -5,7 +5,7 @@ import {paginationOptsValidator} from "convex/server";
 import {currentResponse} from "./lib/meetingResponses";
 
 export const roleValidator=v.union(v.literal("founder"),v.literal("operator"));
-const contactValidator=v.object({requestId:v.id("founderChoices"),requestedAt:v.number(),welcome:v.string(),name:v.string(),whatsappNumber:v.string(),company:v.optional(v.string()),location:v.optional(v.string()),seen:v.boolean()});
+const contactValidator=v.object({requestId:v.id("founderChoices"),requestedAt:v.number(),welcome:v.string(),name:v.string(),whatsappNumber:v.string(),senderName:v.string(),senderCompany:v.optional(v.string()),company:v.optional(v.string()),location:v.optional(v.string()),seen:v.boolean()});
 const known=(value:string)=>!/^\s*(?:not found|not provided|unknown|n\/?a|none|-)?\s*$/i.test(value);
 
 export const ensureAccepted=internalMutation({
@@ -32,6 +32,8 @@ export const list=internalMutation({
     const founder=args.role==="founder"?await ctx.db.query("founders").withIndex("by_link_hash",q=>q.eq("linkHash",args.linkHash)).unique():null;
     const operatorLink=args.role==="operator"?await ctx.db.query("operatorLinks").withIndex("by_link_hash",q=>q.eq("linkHash",args.linkHash)).unique():null;
     if(!founder&&!operatorLink)return null;
+    const sender=founder??await ctx.db.query("operators").withIndex("by_operator_id",q=>q.eq("operatorId",operatorLink!.operatorId)).unique();
+    if(!sender)return null;
     const page=founder
       ?await ctx.db.query("founderChoices").withIndex("by_founder_status",q=>q.eq("founderId",founder._id).eq("status","Requested")).paginate(args.paginationOpts)
       :await ctx.db.query("founderChoices").withIndex("by_operator_status",q=>q.eq("operatorId",operatorLink!.operatorId).eq("status","Requested")).paginate(args.paginationOpts);
@@ -49,7 +51,7 @@ export const list=internalMutation({
       if(intro.status!=="ready"||!intro.welcome){pending=true;continue;}
       const person=founder?await ctx.db.query("operators").withIndex("by_operator_id",q=>q.eq("operatorId",choice.operatorId)).unique():await ctx.db.get(choice.founderId);
       if(!person)continue;
-      introductions.push({requestId:choice._id,requestedAt:response.requestedAt,welcome:intro.welcome,name:person.name,whatsappNumber:person.whatsappNumber,...(known(person.company)?{company:person.company}:{}),...(known(person.location)?{location:person.location}:{}),seen:(founder?intro.founderSeenAt:intro.operatorSeenAt)!==undefined});
+      introductions.push({requestId:choice._id,requestedAt:response.requestedAt,welcome:intro.welcome,name:person.name,whatsappNumber:person.whatsappNumber,senderName:sender.name,...(known(sender.company)?{senderCompany:sender.company}:{}),...(known(person.company)?{company:person.company}:{}),...(known(person.location)?{location:person.location}:{}),seen:(founder?intro.founderSeenAt:intro.operatorSeenAt)!==undefined});
     }
     return {introductions,pending,isDone:page.isDone,continueCursor:page.continueCursor};
   },

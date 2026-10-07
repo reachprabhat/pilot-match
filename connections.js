@@ -37,7 +37,7 @@
     if (digits.length >= 7 && digits.length <= 15) {
       const message = document.createElement('a'); message.className = 'primary connection-whatsapp'; message.textContent = 'Message on WhatsApp';
       const firstName = row.name.trim().split(/\s+/u)[0] || 'there';
-      const text = `Hi ${firstName}, we were introduced through Besto. Would love to set up a quick call.`;
+      const text = `Hi ${firstName}, I'm ${row.senderName}${row.senderCompany ? ' from ' + row.senderCompany : ''}. We were introduced through Besto. Would love to set up a quick call.`;
       message.href = 'https://wa.me/' + digits + '?text=' + encodeURIComponent(text); message.target = '_blank'; message.rel = 'noopener noreferrer'; message.referrerPolicy = 'no-referrer'; article.append(message);
     } else {
       const note = document.createElement('p'); note.className = 'connection-fact'; note.textContent = 'A WhatsApp number has not been saved yet.'; article.append(note);
