@@ -91,3 +91,6 @@ Button : Founder, enter your requirements
 
 ## Approved Besto branding
 All screens use an Inter 20px Besto text wordmark and the exact 16px promise Warm pilot intros to senior operators. Shared non-navigating header and normal-flow footer: Besto / Ask. Match. Meet. Existing warm surfaces, near-black text, brown primary controls and red errors remain. All headings are 20px; fit scores remain 40px. Full-screen reveals include the same header/footer with buttons near the bottom; saved welcomes and private saved facts remain unchanged.
+
+## Approved handshake logo update (supersedes the header above)
+Original geometric solid-fill handshake SVG with thin finger separations, dark brown #493426. Beside it: bold Inter 40px Besto in #493426; below Besto: Inter 16px Meet the best Operators in existing lighter brown #514a43. This is the only tagline; remove the previous Warm pilot intros promise everywhere. Existing shared footer, 20px headings, 40px fit scores, palette and all screen behavior remain.

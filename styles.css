@@ -24,8 +24,10 @@
 body { margin: 0; min-height: 100svh; display: flex; flex-direction: column; }
 .brand-header, .brand-footer { width: min(680px, calc(100% - 48px)); margin-left: auto; margin-right: auto; }
 .brand-header { margin-top: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
-.brand-wordmark { font-size: 20px; font-weight: 600; line-height: 1.4; }
-.brand-header p { margin: 8px 0 0; line-height: 1.6; }
+.brand-lockup { display: flex; align-items: center; gap: 16px; }
+.brand-lockup svg { width: 64px; height: 64px; flex: none; }
+.brand-wordmark { font-size: 40px; font-weight: 700; line-height: 1.2; color: var(--brown); }
+.brand-header p { margin: 4px 0 0; font-size: 16px; line-height: 1.6; color: #514a43; }
 .brand-footer { padding-top: 16px; margin-bottom: 24px; border-top: 1px solid var(--line); line-height: 1.6; }
 main {
   flex: 1;
