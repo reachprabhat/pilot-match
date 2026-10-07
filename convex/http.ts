@@ -3,6 +3,28 @@ import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 
 const http=httpRouter();
+for(const path of ["/introductions","/introductions/seen"]){
+  http.route({path,method:"POST",handler:httpAction(async(ctx,request)=>{
+    const headers={"Content-Type":"application/json","Cache-Control":"no-store","Referrer-Policy":"no-referrer"};
+    const reply=(body:unknown,status:number)=>new Response(JSON.stringify(body),{status,headers});
+    try{
+      if(Number(request.headers.get("content-length"))>2048)return reply({error:"Invalid request."},400);
+      const text=await request.text();if(text.length>2048)return reply({error:"Invalid request."},400);
+      const body=JSON.parse(text);
+      if(typeof body?.code!=="string"||!/^[A-Za-z0-9_-]{43}$/.test(body.code)||!["founder","operator"].includes(body.role))return reply({error:"Invalid link."},404);
+      const bytes=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(body.code));
+      const linkHash=Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,"0")).join("");
+      if(path.endsWith("/seen")){
+        if(typeof body.requestId!=="string"||body.requestId.length>100||!Number.isFinite(body.requestedAt))return reply({error:"Invalid request."},400);
+        const saved=await ctx.runMutation(internal.introductions.seen,{linkHash,role:body.role,requestId:body.requestId,requestedAt:body.requestedAt});
+        return saved?reply({seen:true},200):reply({error:"This request is no longer accepted."},409);
+      }
+      if(body.cursor!==undefined&&body.cursor!==null&&(typeof body.cursor!=="string"||body.cursor.length>1500))return reply({error:"Invalid request."},400);
+      const result=await ctx.runMutation(internal.introductions.list,{linkHash,role:body.role,paginationOpts:{numItems:20,cursor:body.cursor??null}});
+      return result?reply(result,200):reply({error:"Invalid link."},404);
+    }catch{return reply({error:"Busy right now. Try again in a few minutes."},503);}
+  })});
+}
 http.route({path:"/admin/requests",method:"POST",handler:httpAction(async(ctx,request)=>{
   const headers={"Content-Type":"application/json","Cache-Control":"no-store","Referrer-Policy":"no-referrer"};
   const reply=(body:unknown,status:number)=>new Response(JSON.stringify(body),{status,headers});
@@ -32,6 +54,7 @@ http.route({path:"/operator/response",method:"POST",handler:httpAction(async(ctx
     // The validator checks the document ID; ownership is checked in the mutation.
     const result=await ctx.runMutation(internal.operatorResponses.save,{linkHash,requestId:body.requestId,requestedAt:body.requestedAt,status:body.status});
     if("error" in result)return reply({error:result.error==="invalid_link"?"Invalid link.":"This request changed. Reload to see its latest status."},result.error==="invalid_link"?404:409);
+    if(result.status==="Interested")await ctx.runMutation(internal.introductions.ensureAccepted,{requestId:result.requestId});
     return reply(result,200);
   }catch{return reply({error:"Could not save your response. Try again or reload."},503);}
 })});

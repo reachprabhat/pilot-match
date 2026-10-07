@@ -26,3 +26,7 @@
 * New ideas go here for future consideration.
 * Ask screen without a personal link: no next step for new founders
 
+
+## Approved extension: Accepted connection reveal
+
+Dev verified; owner authorised dev proof followed by production deployment. Save one AI welcome per accepted request, show each person a first full-screen view and later card, and restrict contacts to the accepted pair. Hide on Not relevant.

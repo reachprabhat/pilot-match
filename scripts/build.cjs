@@ -7,6 +7,8 @@ const files = [
   'index.html',
   'styles.css',
   'app.js',
+  'connections.css',
+  'connections.js',
   'operator.html',
   'operator.css',
   'operator.js',
@@ -23,7 +25,7 @@ for (const file of files) {
   fs.mkdirSync(path.dirname(output), { recursive: true });
   if (file === 'index.html' || file === 'operator.html' || file === 'admin.html') {
     let html = fs.readFileSync(path.join(root, file), 'utf8');
-    for (const asset of file === 'index.html' ? ['styles.css', 'app.js'] : file === 'operator.html' ? ['styles.css', 'operator.css', 'operator.js'] : ['styles.css', 'admin.css', 'admin.js']) {
+    for (const asset of file === 'index.html' ? ['styles.css', 'app.js', 'connections.css', 'connections.js'] : file === 'operator.html' ? ['styles.css', 'operator.css', 'operator.js', 'connections.css', 'connections.js'] : ['styles.css', 'admin.css', 'admin.js']) {
       const version = crypto.createHash('sha256').update(fs.readFileSync(path.join(root, asset))).digest('hex').slice(0, 12);
       html = html.replace(`"/${asset}"`, `"/${asset}?v=${version}"`);
     }

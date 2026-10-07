@@ -6,6 +6,8 @@ import {choiceStatusValidator} from "./choiceValidators";
 import {operatorResponseValidator} from "./responseValidators";
 
 export default defineSchema({
+  introductions: defineTable({requestId:v.id("founderChoices"),searchId:v.id("founderSearches"),requestedAt:v.number(),founderId:v.id("founders"),operatorId:v.string(),status:v.union(v.literal("queued"),v.literal("running"),v.literal("ready"),v.literal("failed")),welcome:v.optional(v.string()),responseId:v.optional(v.string()),callId:v.optional(v.id("aiCalls")),providerCallCount:v.optional(v.number()),founderSeenAt:v.optional(v.number()),operatorSeenAt:v.optional(v.number())})
+    .index("by_request_identity",["requestId","requestedAt"]),
   adminLinks: defineTable({owner:v.literal("Prabhat"),linkHash:v.string()})
     .index("by_owner",["owner"]).index("by_link_hash",["linkHash"]),
   operatorResponses: defineTable({requestId:v.id("founderChoices"),searchId:v.id("founderSearches"),requestedAt:v.number(),status:operatorResponseValidator,updatedAt:v.number()})
@@ -15,7 +17,7 @@ export default defineSchema({
   operatorRequests: defineTable({founderId:v.id("founders"),operatorId:v.string(),searchId:v.id("founderSearches"),ask:v.string(),requestedAt:v.number()})
     .index("by_founder_operator",["founderId","operatorId"]),
   founderChoices: defineTable({founderId:v.id("founders"),operatorId:v.string(),status:choiceStatusValidator,updatedAt:v.number()})
-    .index("by_founder_operator",["founderId","operatorId"]).index("by_operator_status",["operatorId","status"]).index("by_status_updated_at",["status","updatedAt"]),
+    .index("by_founder_operator",["founderId","operatorId"]).index("by_founder_status",["founderId","status"]).index("by_operator_status",["operatorId","status"]).index("by_status_updated_at",["status","updatedAt"]),
   founders: defineTable({
     founderId:v.string(), name:v.string(), whatsappNumber:v.string(),
     headline:v.string(),company:v.string(),currentRole:v.string(),location:v.string(),
@@ -48,6 +50,7 @@ export default defineSchema({
   aiCalls: defineTable({
     operatorId: v.optional(v.string()),founderId:v.optional(v.id("founders")),
     startedAt: v.number(),
-    purpose: v.union(v.literal("operator_enrichment"),v.literal("founder_matching")),
+    purpose: v.union(v.literal("operator_enrichment"),v.literal("founder_matching"),v.literal("accepted_welcome")),
+    introductionId:v.optional(v.id("introductions")),
   }).index("by_started_at", ["startedAt"]),
 });

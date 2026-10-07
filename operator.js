@@ -38,6 +38,7 @@ function addCard(request){
         if(requestVersion!==version||!article.isConnected)return;
         if(!response.ok||result.requestId!==request.requestId||result.status!==value)throw new Error(response.status===409?'This request changed. Reload to see its latest status.':'Could not save your response. Try again or reload.');
         savedResponse=result.status;update();
+        window.dispatchEvent(new Event('connection-status-changed'));
       }catch(error){
         if(requestVersion!==version||!article.isConnected)return;
         status.classList.add('error');status.textContent=`${savedResponse?savedResponse+'. ':''}${error.message==='This request changed. Reload to see its latest status.'?error.message:'Could not save your response. Try again or reload.'}`;

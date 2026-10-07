@@ -116,6 +116,7 @@ function showMatches(matches, focus = true) {
           savedChoice = result.status;
           savedResponse = result.response || '';
           updateChoice();
+          window.dispatchEvent(new Event('connection-status-changed'));
         } catch (error) {
           if (personalCode !== code || searchVersion !== version || !card.isConnected) return;
           status.textContent = `${displayChoice() ? displayChoice() + '. ' : ''}${error.message === 'Reload to choose from your latest matches.' ? error.message : 'Could not confirm your choice. Try again or reload.'}`;

@@ -1,0 +1,17 @@
+// Exercise the actual Convex Agent and OpenAI SDK against a fictional transport.
+// This catches the previously broken setup without sending a paid provider call.
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),esbuild=require('esbuild');
+let transportCalls=0,started=false,providerReserved=false,finished,failTransport=false;
+const references={reserve:'reserve',providerCall:'providerCall',finish:'finish'},component=new Proxy({},{get:()=>component}),validator=new Proxy(()=>validator,{get:()=>validator});
+const sandbox={module:{exports:{}},require:name=>name==='./_generated/server'?{internalAction:x=>x}:name==='./_generated/api'?{internal:{introductionStore:references},components:{agent:component}}:name==='convex/values'?{v:validator}:require(name),process:{env:{OPENAI_API_KEY:'fictional-test-key'}},AbortSignal,console:{warn:()=>{}},fetch:async(url,options)=>{
+ transportCalls++;assert.equal(String(url),'https://api.openai.com/v1/responses');const body=JSON.parse(options.body);assert.equal(body.model,'gpt-6-luna');assert.equal(body.reasoning.effort,'low');assert.equal(body.max_output_tokens,1200);assert.equal(body.store,false);assert.ok(!body.tools?.length);assert.ok(!JSON.stringify(body).includes('fictional-test-key'));if(failTransport)throw Error('Fictional outage');
+ return new Response(JSON.stringify({id:'resp_fictional',object:'response',created_at:1,status:'completed',model:'gpt-6-luna',output:[{id:'msg_fictional',type:'message',role:'assistant',status:'completed',content:[{type:'output_text',annotations:[],text:JSON.stringify({sentences:['Welcome to your connection.','Start a conversation on WhatsApp.']})}]}],usage:{input_tokens:1,output_tokens:20,total_tokens:21}}),{status:200,headers:{'Content-Type':'application/json'}});
+}};
+vm.runInNewContext(esbuild.transformSync(fs.readFileSync('convex/introductionWelcome.ts','utf8'),{loader:'ts',format:'cjs'}).code,sandbox);
+const ctx={runQuery:async()=>[],runMutation:async(ref,args)=>{if(ref==='reserve'){if(started)return null;started=true;return {profileText:'{"founder":{"profileText":"Example"},"operator":{"profileText":"Example"}}'};}if(ref==='providerCall'){assert.ok(!providerReserved);providerReserved=true;return true;}if(ref==='finish'){finished=args;return null;}throw Error('Unexpected mutation');}};
+(async()=>{
+ await sandbox.module.exports.generate.handler(ctx,{introductionId:'fictional-request'});assert.equal(transportCalls,1);assert.equal(finished.welcome,'Welcome to your connection. Start a conversation on WhatsApp.');assert.equal(finished.responseId,'resp_fictional');
+ await sandbox.module.exports.generate.handler(ctx,{introductionId:'fictional-request'});assert.equal(transportCalls,1,'repeated generation cannot reach the provider');
+ started=false;providerReserved=false;finished=undefined;failTransport=true;await sandbox.module.exports.generate.handler(ctx,{introductionId:'fictional-second-request'});assert.equal(transportCalls,2,'provider failure has no retries');assert.ok(!finished.welcome);
+ console.log('PASS: real Agent/SDK setup reaches transport, one call, two saved sentences, pinned model/low/1200/no-tools/store:false, repeats blocked and failure has no provider retry. No real AI calls.');
+})().catch(e=>{console.error(e);process.exitCode=1;});

@@ -16,6 +16,9 @@ import type * as enrichmentValidators from "../enrichmentValidators.js";
 import type * as founderSearches from "../founderSearches.js";
 import type * as founders from "../founders.js";
 import type * as http from "../http.js";
+import type * as introductionStore from "../introductionStore.js";
+import type * as introductionWelcome from "../introductionWelcome.js";
+import type * as introductions from "../introductions.js";
 import type * as lib_enrichment from "../lib/enrichment.js";
 import type * as lib_evidenceSource from "../lib/evidenceSource.js";
 import type * as lib_matching from "../lib/matching.js";
@@ -51,6 +54,9 @@ declare const fullApi: ApiFromModules<{
   founderSearches: typeof founderSearches;
   founders: typeof founders;
   http: typeof http;
+  introductionStore: typeof introductionStore;
+  introductionWelcome: typeof introductionWelcome;
+  introductions: typeof introductions;
   "lib/enrichment": typeof lib_enrichment;
   "lib/evidenceSource": typeof lib_evidenceSource;
   "lib/matching": typeof lib_matching;
@@ -100,4 +106,5 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   staticHosting: import("@convex-dev/static-hosting/_generated/component.js").ComponentApi<"staticHosting">;
+  agent: import("@convex-dev/agent/_generated/component.js").ComponentApi<"agent">;
 };

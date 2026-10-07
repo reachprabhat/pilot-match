@@ -18,6 +18,7 @@ const base='https://neat-hyena-46.convex.site';
       const event=message.params;
       (async()=>{
         let body,status=200;
+        if(new URL(event.request.url).pathname==='/api/introductions'){await send('Fetch.fulfillRequest',{requestId:event.requestId,responseCode:200,responseHeaders:[{name:'Content-Type',value:'application/json'}],body:Buffer.from(JSON.stringify({introductions:[],pending:false,isDone:true,continueCursor:''})).toString('base64')}).catch(error=>{if(error.message!=='Invalid InterceptionId.')throw error;});return;}
         if(new URL(event.request.url).pathname==='/api/founder')body={company:'Fictional Example Company',searchCount:count,searchLimit:3,searchesRemaining:3-count};
         else if(new URL(event.request.url).pathname==='/api/matches')body={ask:count?'A fictional saved ask':'',matches:count?matches.map(match=>({...match,choice:null})):[]};
         else if(new URL(event.request.url).pathname==='/api/search'){
