@@ -21,8 +21,6 @@ html:has(.connection-reveal[open]) { overflow: hidden; }
 .connection-reveal h1:focus { outline: none; }
 .connection-reveal .connection-whatsapp { margin-top: auto; }
 .connection-continue { width: 100%; margin-top: 16px; }
-.connection-payment { display: block; text-align: center; text-decoration: none; min-height: 48px; margin-top: 32px; }
-.connection-reveal .connection-payment { margin-top: auto; }
 .connection-card .connection-note { margin-top: 16px; color: var(--error); }
 @media (max-width: 600px) {
   .connection-reveal { padding: 16px; padding-top: max(16px, env(safe-area-inset-top)); padding-bottom: max(16px, env(safe-area-inset-bottom)); }

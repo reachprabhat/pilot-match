@@ -29,7 +29,6 @@ import type * as lib_operatorApplication from "../lib/operatorApplication.js";
 import type * as lib_operatorLinkSecrets from "../lib/operatorLinkSecrets.js";
 import type * as lib_opportunity from "../lib/opportunity.js";
 import type * as lib_repairDash from "../lib/repairDash.js";
-import type * as lib_revealAccess from "../lib/revealAccess.js";
 import type * as matching from "../matching.js";
 import type * as matchingStore from "../matchingStore.js";
 import type * as matchingValidators from "../matchingValidators.js";
@@ -45,7 +44,6 @@ import type * as operatorResponses from "../operatorResponses.js";
 import type * as operatorRiskSearch from "../operatorRiskSearch.js";
 import type * as operatorRiskStore from "../operatorRiskStore.js";
 import type * as responseValidators from "../responseValidators.js";
-import type * as revealPayments from "../revealPayments.js";
 import type * as searchRules from "../searchRules.js";
 
 import type {
@@ -76,7 +74,6 @@ declare const fullApi: ApiFromModules<{
   "lib/operatorLinkSecrets": typeof lib_operatorLinkSecrets;
   "lib/opportunity": typeof lib_opportunity;
   "lib/repairDash": typeof lib_repairDash;
-  "lib/revealAccess": typeof lib_revealAccess;
   matching: typeof matching;
   matchingStore: typeof matchingStore;
   matchingValidators: typeof matchingValidators;
@@ -92,7 +89,6 @@ declare const fullApi: ApiFromModules<{
   operatorRiskSearch: typeof operatorRiskSearch;
   operatorRiskStore: typeof operatorRiskStore;
   responseValidators: typeof responseValidators;
-  revealPayments: typeof revealPayments;
   searchRules: typeof searchRules;
 }>;
 

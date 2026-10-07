@@ -10,7 +10,7 @@
   dialog.className = 'connection-reveal'; dialog.setAttribute('aria-labelledby', 'connection-title');
   document.body.append(dialog);
   let version = 0, controller, code, timer, active, queue = [], seen = new Set();
-  const key = row => row.requestId + ':' + row.requestedAt + (row.locked ? ':locked' : ':open');
+  const key = row => row.requestId + ':' + row.requestedAt;
   const clear = () => { dialog.close(); dialog.replaceChildren(); cards.replaceChildren(); cards.hidden = true; active = undefined; queue = []; };
   const post = async (path, body, signal) => {
     const response = await fetch('/api/' + path, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({code, role, ...body}), cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer', signal: AbortSignal.any([signal, AbortSignal.timeout(15000)])});
@@ -21,17 +21,8 @@
     const article = document.createElement('article'); article.className = 'connection-card';
     article.dataset.requestId = row.requestId;
     const heading = document.createElement(fullScreen ? 'h1' : 'h2');
-    heading.textContent = row.locked ? (row.price !== undefined ? `Accepted. Pay ₹${row.price.toLocaleString('en-IN')} to see who it is` : 'Accepted. Payment details will be available soon.') : 'You’re connected';
+    heading.textContent = 'You’re connected';
     if (fullScreen) { heading.id = 'connection-title'; heading.tabIndex = -1; }
-    if (row.locked) {
-      article.classList.add('connection-locked'); article.append(heading);
-      const note = document.createElement('p'); note.className = 'connection-welcome'; note.textContent = 'Your introduction will unlock after payment is confirmed.'; article.append(note);
-      if (row.paymentLink && row.price !== undefined) {
-        const pay = document.createElement('a'); pay.className = 'primary connection-payment'; pay.textContent = `Pay ₹${row.price.toLocaleString('en-IN')}`;
-        pay.href = row.paymentLink; pay.target = '_blank'; pay.rel = 'noopener noreferrer'; pay.referrerPolicy = 'no-referrer'; article.append(pay);
-      }
-      return article;
-    }
     const welcome = document.createElement('p'); welcome.className = 'connection-welcome'; welcome.textContent = row.welcome;
     const name = document.createElement('p'), phone = document.createElement('p');
     name.className = 'connection-name'; phone.className = 'connection-phone';
@@ -54,7 +45,6 @@
     return article;
   }
   async function recordSeen(row, currentVersion) {
-    if (row.locked) { if (currentVersion === version) seen.add(key(row)); return currentVersion === version; }
     try {
       await post('introductions/seen', {requestId: row.requestId, requestedAt: row.requestedAt}, controller.signal);
       if (currentVersion === version) seen.add(key(row));

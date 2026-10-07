@@ -3,7 +3,6 @@ const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const files = {
-  '/admin-payments.js': ['admin-payments.js', 'text/javascript; charset=utf-8'],
   '/admin-whatsapp.js': ['admin-whatsapp.js', 'text/javascript; charset=utf-8'],
   '/admin-approved.js': ['admin-approved.js', 'text/javascript; charset=utf-8'],
   '/signup.html': ['signup.html', 'text/html; charset=utf-8'],

@@ -3,7 +3,6 @@ import {v} from "convex/values";
 import {operatorResponseValidator} from "./responseValidators";
 import {requestIdentity} from "./lib/meetingResponses";
 import {privateOpportunity} from "./lib/opportunity";
-import {ensureAccess} from "./lib/revealAccess";
 
 export const save=internalMutation({
   args:{linkHash:v.string(),requestId:v.id("founderChoices"),requestedAt:v.number(),status:operatorResponseValidator},
@@ -21,7 +20,7 @@ export const save=internalMutation({
     const search=await ctx.db.get(identity.searchId);
     if(!search||search.founderId!==choice.founderId||search.status!=="completed"||!search.matches?.some(match=>match.operatorId===link.operatorId))return {error:"invalid_request" as const};
     const existing=await ctx.db.query("operatorResponses").withIndex("by_request",q=>q.eq("requestId",choice._id)).unique();
-    if(existing&&existing.searchId===identity.searchId&&existing.requestedAt===identity.requestedAt&&existing.status===args.status){if(args.status==="Interested")await ensureAccess(ctx,choice);return {requestId:choice._id,status:existing.status,updatedAt:existing.updatedAt};}
+    if(existing&&existing.searchId===identity.searchId&&existing.requestedAt===identity.requestedAt&&existing.status===args.status)return {requestId:choice._id,status:existing.status,updatedAt:existing.updatedAt};
     // Anchor legacy requests without changing the founder's saved choice.
     const saved=await ctx.db.query("operatorRequests").withIndex("by_founder_operator",q=>q.eq("founderId",choice.founderId).eq("operatorId",link.operatorId)).unique();
     if(!saved){
@@ -33,7 +32,6 @@ export const save=internalMutation({
     const fields={...identity,status:args.status,updatedAt};
     if(existing)await ctx.db.patch(existing._id,fields);
     else await ctx.db.insert("operatorResponses",{requestId:choice._id,...fields});
-    if(args.status==="Interested")await ensureAccess(ctx,choice);
     return {requestId:choice._id,status:args.status,updatedAt};
   },
 });

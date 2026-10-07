@@ -3,11 +3,9 @@ import {internal} from "./_generated/api";
 import {v} from "convex/values";
 import {paginationOptsValidator} from "convex/server";
 import {currentResponse} from "./lib/meetingResponses";
-import {ensureAccess} from "./lib/revealAccess";
 
 export const roleValidator=v.union(v.literal("founder"),v.literal("operator"));
 const contactValidator=v.object({requestId:v.id("founderChoices"),requestedAt:v.number(),welcome:v.string(),name:v.string(),whatsappNumber:v.string(),company:v.optional(v.string()),location:v.optional(v.string()),seen:v.boolean()});
-const lockedValidator=v.object({requestId:v.id("founderChoices"),requestedAt:v.number(),locked:v.literal(true),price:v.optional(v.number()),paymentLink:v.optional(v.string()),seen:v.literal(false)});
 const known=(value:string)=>!/^\s*(?:not found|not provided|unknown|n\/?a|none|-)?\s*$/i.test(value);
 
 export const ensureAccepted=internalMutation({
@@ -15,7 +13,6 @@ export const ensureAccepted=internalMutation({
   handler:async(ctx,args)=>{
     const choice=await ctx.db.get(args.requestId),response=choice?await currentResponse(ctx,choice):null;
     if(!choice||response?.status!=="Interested")return null;
-    await ensureAccess(ctx,choice);
     const existing=await ctx.db.query("introductions").withIndex("by_request_identity",q=>q.eq("requestId",choice._id).eq("requestedAt",response.requestedAt)).unique();
     if(!existing){
       const introductionId=await ctx.db.insert("introductions",{requestId:choice._id,searchId:response.searchId,requestedAt:response.requestedAt,founderId:choice.founderId,operatorId:choice.operatorId,status:"queued"});
@@ -30,7 +27,7 @@ export const ensureAccepted=internalMutation({
 // A link is checked before any request or contact is read. Raw codes never reach storage.
 export const list=internalMutation({
   args:{linkHash:v.string(),role:roleValidator,paginationOpts:paginationOptsValidator},
-  returns:v.union(v.null(),v.object({introductions:v.array(v.union(contactValidator,lockedValidator)),pending:v.boolean(),isDone:v.boolean(),continueCursor:v.string()})),
+  returns:v.union(v.null(),v.object({introductions:v.array(contactValidator),pending:v.boolean(),isDone:v.boolean(),continueCursor:v.string()})),
   handler:async(ctx,args)=>{
     const founder=args.role==="founder"?await ctx.db.query("founders").withIndex("by_link_hash",q=>q.eq("linkHash",args.linkHash)).unique():null;
     const operatorLink=args.role==="operator"?await ctx.db.query("operatorLinks").withIndex("by_link_hash",q=>q.eq("linkHash",args.linkHash)).unique():null;
@@ -42,7 +39,6 @@ export const list=internalMutation({
     for(const choice of page.page){
       const response=await currentResponse(ctx,choice);
       if(response?.status!=="Interested")continue;
-      const access=founder?await ensureAccess(ctx,choice):null;
       let intro=await ctx.db.query("introductions").withIndex("by_request_identity",q=>q.eq("requestId",choice._id).eq("requestedAt",response.requestedAt)).unique();
       if(!intro){
         const id=await ctx.db.insert("introductions",{requestId:choice._id,searchId:response.searchId,requestedAt:response.requestedAt,founderId:choice.founderId,operatorId:choice.operatorId,status:"queued"});
@@ -50,9 +46,6 @@ export const list=internalMutation({
         intro=await ctx.db.get(id);
       }
       if(!intro||intro.searchId!==response.searchId)continue;
-      if(founder&&intro.founderSeenAt===undefined&&access?.status==="locked"){
-        introductions.push({requestId:choice._id,requestedAt:response.requestedAt,locked:true as const,seen:false as const,...(access.price!==undefined?{price:access.price,paymentLink:access.paymentLink}:{})});continue;
-      }
       if(intro.status!=="ready"||!intro.welcome){pending=true;continue;}
       const person=founder?await ctx.db.query("operators").withIndex("by_operator_id",q=>q.eq("operatorId",choice.operatorId)).unique():await ctx.db.get(choice.founderId);
       if(!person)continue;
@@ -74,7 +67,6 @@ export const seen=internalMutation({
     if(response?.status!=="Interested"||response.requestedAt!==args.requestedAt)return false;
     const intro=await ctx.db.query("introductions").withIndex("by_request_identity",q=>q.eq("requestId",choice._id).eq("requestedAt",args.requestedAt)).unique();
     if(!intro||intro.status!=="ready"||intro.searchId!==response.searchId)return false;
-    if(founder&&intro.founderSeenAt===undefined&&(await ensureAccess(ctx,choice)).status==="locked")return false;
     const field=founder?"founderSeenAt":"operatorSeenAt";
     if(intro[field]===undefined)await ctx.db.patch(intro._id,{[field]:Date.now()});
     return true;

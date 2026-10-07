@@ -7,15 +7,12 @@ import {operatorResponseValidator} from "./responseValidators";
 import {applicationFields} from "./operatorApplicationValidators";
 
 export default defineSchema({
-  revealSettings:defineTable({key:v.literal("founder_reveals"),price:v.number(),paymentLink:v.string(),updatedAt:v.number()}).index("by_key",["key"]),
-  founderRevealAllowances:defineTable({founderId:v.id("founders"),freeOperatorId:v.optional(v.string())}).index("by_founder",["founderId"]),
-  founderOperatorAccess:defineTable({founderId:v.id("founders"),operatorId:v.string(),status:v.union(v.literal("free"),v.literal("grandfathered"),v.literal("locked"),v.literal("paid")),price:v.optional(v.number()),paymentLink:v.optional(v.string()),paidAt:v.optional(v.number()),paidRequestId:v.optional(v.id("founderChoices")),paidRequestedAt:v.optional(v.number())}).index("by_founder_operator",["founderId","operatorId"]),
   operatorLinkSecrets:defineTable({operatorId:v.string(),encryptedCode:v.string()}).index("by_operator_id",["operatorId"]),
   adminRequestNotifications:defineTable({requestId:v.id("founderChoices"),requestedAt:v.number(),notifiedAt:v.number()}).index("by_request_identity",["requestId","requestedAt"]),
   operatorApplications:defineTable({...applicationFields,industrySelectionVersion:v.optional(v.literal(1)),submissionId:v.string(),consentText:v.string(),consentedAt:v.number(),status:v.union(v.literal("Pending"),v.literal("Approved")),operatorId:v.optional(v.string()),approvedAt:v.optional(v.number())})
     .index("by_status",["status"]).index("by_submission_id",["submissionId"]),
   introductions: defineTable({requestId:v.id("founderChoices"),searchId:v.id("founderSearches"),requestedAt:v.number(),founderId:v.id("founders"),operatorId:v.string(),status:v.union(v.literal("queued"),v.literal("running"),v.literal("ready"),v.literal("failed")),welcome:v.optional(v.string()),responseId:v.optional(v.string()),callId:v.optional(v.id("aiCalls")),providerCallCount:v.optional(v.number()),founderSeenAt:v.optional(v.number()),operatorSeenAt:v.optional(v.number())})
-    .index("by_request_identity",["requestId","requestedAt"]).index("by_founder",["founderId"]),
+    .index("by_request_identity",["requestId","requestedAt"]),
   adminLinks: defineTable({owner:v.literal("Prabhat"),linkHash:v.string()})
     .index("by_owner",["owner"]).index("by_link_hash",["linkHash"]),
   operatorResponses: defineTable({requestId:v.id("founderChoices"),searchId:v.id("founderSearches"),requestedAt:v.number(),status:operatorResponseValidator,updatedAt:v.number()})
