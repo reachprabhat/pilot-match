@@ -6,6 +6,7 @@
 .signup-field input::placeholder { color: var(--muted); opacity: 1; }
 .signup-field input { caret-color: var(--accent); }
 .signup-wide { margin-top: 16px; }
+.signup-panel textarea { min-height: 112px; height: 112px; padding: 12px; border-radius: 8px; background: transparent; }
 .signup-panel fieldset { border: 0; padding: 0; margin: 24px 0 0; min-width: 0; }
 .signup-panel legend { padding: 0; font-weight: 600; line-height: 1.6; }
 .signup-panel .chip-note { color: var(--muted); margin: 4px 0 12px; }

@@ -129,3 +129,6 @@ What changed in the plan: No changes after 1st test.
 
 ## Approved extension: public operator applications
 Dev-only extension: operators submit name, company, role, city, WhatsApp, LinkedIn profile URL, self-reported annual INR revenue band, up to three pilot preferences, up to three help areas and required contact-sharing consent. Applications are Pending until the owner approves from the existing private admin link. Only approval inserts a new operator into the existing matching table. Pilot preferences map to industry, help capabilities to about; companyProblems stays not found. No automatic enrichment, no signup AI calls and no login. Existing operators and all personal links are preserved. Participant contacts remain restricted to each Accepted pair.
+
+
+Signup refinement: new applicants choose exactly one Your industry entry, saved on approval in the existing industry field. Optional pain points up to 200 characters are saved in the application and mapped to companyProblems on approval; blank means not found. Help areas continue mapping to about, not to companyProblems. Existing matching reads both fields without logic changes. Pending-to-approved owner flow unchanged; old applications remain approvable without editing their records. Dev only.

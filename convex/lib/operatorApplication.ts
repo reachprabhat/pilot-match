@@ -2,8 +2,8 @@ export const pilotPreferences = ["Food", "Glassware", "Electrical goods", "Autom
 export const helpAreas = ["Raw material costs", "Energy costs", "Packaging costs", "Supply chain disruptions", "Shipping disruptions", "Currency swings", "Regulatory shifts", "Physical impacts", "Seasonal sales", "Geopolitical uncertainty", "Competition", "Working capital"];
 export const revenueRanges = ["Below ₹1 crore", "₹1–less than ₹10 crore", "₹10–less than ₹50 crore", "₹50–less than ₹100 crore", "₹100–less than ₹500 crore", "₹500–less than ₹1,000 crore", "₹1,000 crore or more", "Prefer not to disclose"];
 export const consentText = "I agree founders I accept can see my name and WhatsApp.";
-export type ApplicationInput = {name:string;company:string;role:string;city:string;whatsapp:string;linkedin:string;revenue:string;preferences:string[];areas:string[];consent:boolean};
-export function validateApplication(input:unknown):ApplicationInput {
+export type ApplicationInput = {name:string;company:string;role:string;city:string;whatsapp:string;linkedin:string;revenue:string;preferences:string[];areas:string[];consent:boolean;painPoints?:string};
+export function validateApplication(input:unknown,legacyIndustry=false):ApplicationInput {
   if(!input || typeof input!=="object" || Array.isArray(input))throw Error("Check your answers and try again.");
   const body=input as Record<string,unknown>;
   const text=(key:string,max:number)=>{const value=body[key];if(typeof value!=="string" || !value.trim() || value.trim().length>max || /[\u0000-\u001f]/.test(value))throw Error("Enter a valid "+key+".");return value.trim();};
@@ -14,11 +14,14 @@ export function validateApplication(input:unknown):ApplicationInput {
   if(!revenueRanges.includes(revenue))throw Error("Choose a revenue range.");
   const chips=(key:string,allowed:string[])=>{const values=body[key];if(!Array.isArray(values)||values.length>3||values.some(value=>typeof value!=="string"||!allowed.includes(value))||new Set(values).size!==values.length)throw Error("Choose up to 3 valid "+key+".");return values as string[];};
   if(body.consent!==true)throw Error("Tick the consent box to submit.");
-  return {name,company,role,city,whatsapp,linkedin:url.href,revenue,preferences:chips("preferences",pilotPreferences),areas:chips("areas",helpAreas),consent:true};
+  const preferences=chips("preferences",pilotPreferences);
+  if(!legacyIndustry&&preferences.length!==1)throw Error("Choose exactly one industry.");
+  if(body.painPoints!==undefined&&(typeof body.painPoints!=="string"||body.painPoints.length>200||/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(body.painPoints)))throw Error("Keep pain points within 200 characters.");
+  return {name,company,role,city,whatsapp,linkedin:url.href,revenue,preferences,areas:chips("areas",helpAreas),consent:true,painPoints:((body.painPoints as string|undefined)??"").trim()};
 }
-export function matchingProfile(input:ApplicationInput) {
+export function matchingProfile(input:ApplicationInput,legacyIndustry=false) {
   return {name:input.name,company:input.company,currentRole:input.role,headline:input.role,location:input.city,whatsappNumber:input.whatsapp,sourceLink:input.linkedin,
     revenueBand:input.revenue==="Prefer not to disclose"?"not found":input.revenue,
-    industry:input.preferences.length?"Pilot preferences: "+input.preferences.join("; "):"not found",
-    about:input.areas.length?"Areas I can help with: "+input.areas.join("; "):"not found",companyProblems:"not found"};
+    industry:input.preferences.length?(legacyIndustry?"Pilot preferences: ":"")+input.preferences.join("; "):"not found",
+    about:input.areas.length?"Areas I can help with: "+input.areas.join("; "):"not found",companyProblems:input.painPoints?.trim()||"not found"};
 }

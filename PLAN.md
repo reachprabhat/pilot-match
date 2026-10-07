@@ -54,3 +54,7 @@ Complete: original handshake and sole tagline dev verified, deployed, all live s
 Owner approved the public operator signup plan, navy palette and compact shared header. WhatsApp buttons stay #25D366 with white text. New applications are Pending in a separate table; only private-admin approval inserts a new operator into the existing matching table. Identity/contact fields and consent required; each vocabulary chip list allows zero to three selections. Existing profiles, links, matching/scoring, quota, meeting flows and Accepted-only contact access stay unchanged. Production deployment is not authorised for this extension.
 
 Dev complete: real signup and approval walked in browser, Pending excluded from matching, approval replay inserts no duplicate, denied admin cannot read/approve. 390px signup, Ask and both reveal screenshots captured. Next: owner reviews the dev site on their phone.
+
+
+## Approved signup refinement (dev only)
+Rename Pilot preferences to Your industry and require exactly one choice for new applications. Keep help areas unchanged. Add optional Any other pain points you have, maximum 200 characters, mapped on approval to the existing companyProblems field matching reads. Existing operators, matching logic, approval flow and production remain unchanged. Older Pending applications retain their prior industry selections and approval behavior. Dev browser proof and data comparison complete; phone review next.
