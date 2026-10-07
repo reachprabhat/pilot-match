@@ -5,6 +5,7 @@ const fakeFs={mkdirSync:()=>{},readFileSync:(p,encoding)=>encoding?files.get(p):
 files.set(path.join(root,'connections.css'),'article {color:inherit}');files.set(path.join(root,'connections.js'),'const connectionsVersion=1;');
 for(const [file,content] of [['signup.html','<link href="/styles.css"><link href="/signup.css"><script src="/signup.js"></script>'],['signup.css','form {color:inherit}'],['signup.js','const signupVersion=1;'],['admin-applications.js','const applicationVersion=1;']])files.set(path.join(root,file),content);
 files.set(path.join(root,'admin-whatsapp.js'),'const whatsappVersion=1;');files.set(path.join(root,'admin-approved.js'),'const approvedVersion=1;');
+files.set(path.join(root,'admin-growth.js'),'const growthVersion=1;');
 function build(){vm.runInNewContext(source,{__dirname,require:n=>n==='node:fs'?fakeFs:require(n),console:{log:()=>{}}});return files.get(path.join(root,'dist/index.html'));}
 const before=build();assert.match(before,/app.js\?v=[a-f0-9]{12}/);const css=before.match(/styles.css[^"]+/)[0];files.set(path.join(root,'app.js'),'const version=2;');const after=build();assert.notEqual(after,before);assert.equal(after.match(/styles.css[^"]+/)[0],css);assert.equal(build(),after);
 const operatorBefore=files.get(path.join(root,'dist/operator.html'));files.set(path.join(root,'operator.js'),'const operatorVersion=2;');assert.equal(build(),after,'operator edits leave founder build unchanged');assert.notEqual(files.get(path.join(root,'dist/operator.html')),operatorBefore);

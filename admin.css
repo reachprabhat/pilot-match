@@ -42,3 +42,12 @@
   #admin-refresh { margin-top: auto; }
   #admin-content { padding-bottom: 32px; }
 }
+#payments-section,#founder-notifications-section {margin-top:32px;padding-top:32px;border-top:1px solid var(--line);min-width:0;}
+#payments-section p,#founder-notifications-section p {margin:12px 0;overflow-wrap:anywhere;}
+#payments-section label {display:block;font-weight:600;margin:16px 0 8px;}
+#payment-qr-file {width:100%;max-width:100%;font:inherit;}
+#payments-section button,#founder-notifications-section button {width:100%;margin-top:16px;}
+#admin-payment-qr {display:block;width:min(240px,100%);height:auto;margin:16px auto;}
+#admin-payment-qr[hidden] {display:none;}
+#founder-notifications-list article {margin-top:24px;padding-top:24px;border-top:1px solid var(--line);}
+.payment-status {margin:16px 0!important;font-weight:600;}

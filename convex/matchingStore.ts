@@ -1,6 +1,7 @@
 import {internalMutation,internalQuery} from "./_generated/server";
 import {v} from "convex/values";
-import {searchState,SEARCH_LIMIT} from "./searchRules";
+import {searchState,dailySearchState,indiaDay,SEARCH_LIMIT} from "./searchRules";
+import {eligibleMatches,excludedOperators} from "./lib/fitList";
 import {matchValidator,matchingResultValidator} from "./matchingValidators";
 import {prepareInput} from "./lib/matching";
 
@@ -13,18 +14,12 @@ export const reserve=internalMutation({
     if(!ask || ask.length>12000 || ask.split(/\s+/u).length>300 || !/^[A-Za-z0-9_-]{16,80}$/.test(args.requestId))return {status:"invalid_ask" as const};
     const founder=await ctx.db.query("founders").withIndex("by_link_hash",q=>q.eq("linkHash",args.linkHash)).unique();
     if(!founder)return {status:"invalid_link" as const};
-    const state=searchState(founder.searchCount);
+    const state=dailySearchState(founder);
     const existing=await ctx.db.query("founderSearches").withIndex("by_founder_request",q=>q.eq("founderId",founder._id).eq("requestId",args.requestId)).unique();
     if(existing && existing.ask!==ask)return {status:"invalid_ask" as const};
-    // Pin repeat asks to their first completed result, across quota resets.
-    const saved=await ctx.db.query("founderSearches").withIndex("by_founder_ask_status",q=>q.eq("founderId",founder._id).eq("ask",ask).eq("status","completed")).order("asc").first();
-    if(saved?.matches){
-      if(founder.activeSearchId!==saved._id)await ctx.db.patch(founder._id,{activeSearchId:saved._id});
-      return {status:"matched" as const,matches:saved.matches,...state};
-    }
     if(existing) {
       if(existing.ask!==ask)return {status:"invalid_ask" as const};
-      if(existing.status==="completed" && existing.matches)return {status:"matched" as const,matches:existing.matches,...state};
+      if(existing.status==="completed" && existing.matches)return {status:"matched" as const,matches:(await eligibleMatches(ctx,founder._id,existing.matches)).slice(0,2),...state};
       return {status:"busy" as const};
     }
     if(state.searchCount>=SEARCH_LIMIT)return {status:"limit_reached" as const,...state};
@@ -37,7 +32,7 @@ export const reserve=internalMutation({
     const recent=await ctx.db.query("aiCalls").withIndex("by_started_at",q=>q.gte("startedAt",now-3600000)).take(100);
     if(recent.length>=100)return {status:"busy" as const};
     const runId=await ctx.db.insert("aiCalls",{founderId:founder._id,startedAt:now,purpose:"founder_matching"});
-    const searchId=await ctx.db.insert("founderSearches",{founderId:founder._id,ask,requestId:args.requestId,savedAt:now,status:"running",runId,resetVersion:founder.searchResetVersion??0});
+    const searchId=await ctx.db.insert("founderSearches",{founderId:founder._id,ask,requestId:args.requestId,savedAt:now,status:"running",runId,resetVersion:founder.searchResetVersion??0,searchDay:indiaDay(now)});
     return {status:"reserved" as const,searchId,founderDocId:founder._id};
   },
 });
@@ -49,8 +44,10 @@ export const input=internalQuery({
     const founder=await ctx.db.get(args.founderDocId);
     if(!founder)throw Error("Missing founder");
     const operators=await ctx.db.query("operators").withIndex("by_operator_id").take(501);
-    if(operators.length<2 || operators.length>500)throw Error("Operator list unavailable");
-    return prepareInput(founder,operators,args.ask);
+    if(operators.length>500)throw Error("Operator list unavailable");
+    const excluded=await excludedOperators(ctx,founder._id);
+    const prepared=prepareInput(founder,operators,args.ask);
+    return {...prepared,operators:prepared.operators.filter(r=>!excluded.has(r.operatorId))};
   },
 });
 
@@ -61,12 +58,15 @@ export const complete=internalMutation({
     if(!search || search.status!=="running")return {status:"busy" as const};
     const founder=await ctx.db.get(search.founderId);
     if(!founder || (founder.searchResetVersion??0)!==search.resetVersion)return {status:"busy" as const};
-    const state=searchState(founder.searchCount);
+    const state=dailySearchState(founder);
+    if(search.searchDay!==indiaDay())return {status:"busy" as const};
     if(state.searchCount>=SEARCH_LIMIT)return {status:"limit_reached" as const,...state};
-    if(args.matches.length!==2 || new Set(args.matches.map(match=>match.operatorId)).size!==2 || args.matches.some(match=>!Number.isInteger(match.score)||match.score<0||match.score>100))throw Error("Invalid matches");
+    if(args.matches.length>6 || new Set(args.matches.map(match=>match.operatorId)).size!==args.matches.length || args.matches.some(match=>!Number.isInteger(match.score)||match.score<0||match.score>100))throw Error("Invalid matches");
+    const eligible=await eligibleMatches(ctx,founder._id,args.matches);
     await ctx.db.patch(search._id,{status:"completed",matches:args.matches,responseId:args.responseId});
-    await ctx.db.patch(founder._id,{searchCount:state.searchCount+1,activeSearchId:search._id});
-    return {status:"matched" as const,matches:args.matches,...searchState(state.searchCount+1)};
+    const charge=args.matches.length?1:0;
+    await ctx.db.patch(founder._id,{searchCount:state.searchCount+charge,searchDay:indiaDay(),activeSearchId:search._id});
+    return {status:"matched" as const,matches:eligible.slice(0,2),...searchState(state.searchCount+charge)};
   },
 });
 export const fail=internalMutation({

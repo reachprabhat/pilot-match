@@ -14,6 +14,7 @@ export const run=internalAction({
     if(reservation.status!=="reserved")return reservation;
     try {
       const input=await ctx.runQuery(internal.matchingStore.input,{founderDocId:reservation.founderDocId,ask:args.ask.trim()});
+      if(!input.operators.length)return await ctx.runMutation(internal.matchingStore.complete,{searchId:reservation.searchId,matches:[],responseId:"no-eligible-operators"});
       const response=await fetch("https://api.openai.com/v1/responses",{
         method:"POST",headers:{Authorization:`Bearer ${process.env.OPENAI_API_KEY}`,"Content-Type":"application/json"},
         body:JSON.stringify(createMatchingRequest(input)),signal:AbortSignal.timeout(45000),

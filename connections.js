@@ -10,7 +10,7 @@
   dialog.className = 'connection-reveal'; dialog.setAttribute('aria-labelledby', 'connection-title');
   document.body.append(dialog);
   let version = 0, controller, code, timer, active, queue = [], seen = new Set();
-  const key = row => row.requestId + ':' + row.requestedAt;
+  const key = row => row.requestId + ':' + row.requestedAt + ':' + (row.locked?'locked':'open');
   const clear = () => { dialog.close(); dialog.replaceChildren(); cards.replaceChildren(); cards.hidden = true; active = undefined; queue = []; };
   const post = async (path, body, signal) => {
     const response = await fetch('/api/' + path, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({code, role, ...body}), cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer', signal: AbortSignal.any([signal, AbortSignal.timeout(15000)])});
@@ -20,6 +20,14 @@
   function details(row, fullScreen = false) {
     const article = document.createElement('article'); article.className = 'connection-card';
     article.dataset.requestId = row.requestId;
+    if(row.locked){
+      const heading=document.createElement(fullScreen?'h1':'h2');heading.textContent='Accepted. Pay to see who it is.';
+      if(fullScreen){heading.id='connection-title';heading.tabIndex=-1;}
+      const note=document.createElement('p');note.textContent='Your first connection is free. Pay using the UPI QR below. Your introduction unlocks after payment is confirmed.';article.append(heading,note);
+      if(row.qrUrl){const qr=document.createElement('img');qr.src=row.qrUrl;qr.alt='UPI payment QR code';qr.className='payment-qr';article.append(qr);}
+      else{const missing=document.createElement('p');missing.textContent='The payment QR is not available yet. Please check back shortly.';article.append(missing);}
+      const waiting=document.createElement('p');waiting.textContent='Waiting for payment confirmation.';waiting.setAttribute('role','status');article.append(waiting);return article;
+    }
     const heading = document.createElement(fullScreen ? 'h1' : 'h2');
     heading.textContent = 'You’re connected';
     if (fullScreen) { heading.id = 'connection-title'; heading.tabIndex = -1; }
@@ -45,6 +53,7 @@
     return article;
   }
   async function recordSeen(row, currentVersion) {
+    if(row.locked){if(currentVersion===version)seen.add(key(row));return currentVersion===version;}
     try {
       await post('introductions/seen', {requestId: row.requestId, requestedAt: row.requestedAt}, controller.signal);
       if (currentVersion === version) seen.add(key(row));
@@ -93,7 +102,7 @@
       if (pending) {
         const notice = document.createElement('p'); notice.className = 'connection-card'; notice.textContent = 'Busy right now. Try again in a few minutes.'; notice.setAttribute('role', 'status'); cards.append(notice);
       }
-      if (active && !rows.some(row => key(row) === key(active))) { dialog.close(); dialog.replaceChildren(); active = undefined; }
+      if (active && !rows.some(row => key(row) === key(active) && Boolean(row.locked)===Boolean(active.locked))) { dialog.close(); dialog.replaceChildren(); active = undefined; }
       if (allowReveal && !active) {
         queue = rows.filter(row => !row.seen && !seen.has(key(row)));
         if (queue.length) revealNext(currentVersion);

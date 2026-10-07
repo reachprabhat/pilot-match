@@ -21,10 +21,12 @@ const matchCards = document.getElementById('match-cards');
 const backToAsk = document.getElementById('back-to-ask');
 const resultsMessage = document.getElementById('results-message');
 let searchVersion = 0;
+let matchRefreshTimer;
+let dailyRefreshTimer;
 
 function renderFounderScreen(focus = true) {
   if (!personalCode) return;
-  const results = new URL(location.href).searchParams.get('screen') === 'results' && matchCards.children.length === 2;
+  const results = new URL(location.href).searchParams.get('screen') === 'results';
   landing.hidden = true;
   linkState.hidden = true;
   ask.hidden = results;
@@ -56,7 +58,7 @@ window.addEventListener('popstate', () => {
 
 function clearMatches() {matchesSection.hidden = true; matchCards.replaceChildren();}
 function showMatches(matches, focus = true) {
-  if (!Array.isArray(matches) || matches.length !== 2 || new Set(matches.map(match => match.operatorId)).size !== 2 ||
+  if (!Array.isArray(matches) || matches.length > 2 || new Set(matches.map(match => match.operatorId)).size !== matches.length ||
       matches.some(match => typeof match.operatorId !== 'string' || !Number.isInteger(match.score) || match.score < 0 || match.score > 100 || typeof match.why !== 'string' || !match.why))
     throw new Error('Invalid matches');
   matchCards.replaceChildren();
@@ -117,6 +119,7 @@ function showMatches(matches, focus = true) {
           savedResponse = result.response || '';
           updateChoice();
           window.dispatchEvent(new Event('connection-status-changed'));
+          if(value==='Requested')await restoreMatches(code,AbortSignal.timeout(15000));
         } catch (error) {
           if (personalCode !== code || searchVersion !== version || !card.isConnected) return;
           status.textContent = `${displayChoice() ? displayChoice() + '. ' : ''}${error.message === 'Reload to choose from your latest matches.' ? error.message : 'Could not confirm your choice. Try again or reload.'}`;
@@ -131,6 +134,7 @@ function showMatches(matches, focus = true) {
     card.append(title, score, reason, actions, status);
     matchCards.append(card);
   }
+  if(!matches.length){const empty=document.createElement('p');empty.textContent='No match found. We will notify as soon as there is a match.';matchCards.append(empty);}
   if (focus) navigateFounderScreen('results');
   else renderFounderScreen(false);
 }
@@ -148,7 +152,10 @@ async function restoreMatches(code, signal, restoreAsk = false) {
     pilotAsk.value = result.ask;
     updateSearchButton();
   }
-  if (result.matches?.length) showMatches(result.matches, false);
+  if (Array.isArray(result.matches)) showMatches(result.matches, false);
+  clearTimeout(matchRefreshTimer);
+  if(result.refreshPending){resultsMessage.textContent='Finding your next best-fit operators...';resultsMessage.hidden=false;matchRefreshTimer=setTimeout(()=>{if(personalCode===code&&searchVersion===version)restoreMatches(code,AbortSignal.timeout(15000)).catch(()=>{});},2500);}
+  else if(resultsMessage.textContent==='Finding your next best-fit operators...')resultsMessage.hidden=true;
 }
 
 function showSearchMessage(message, error = false) {
@@ -166,8 +173,8 @@ function updateSearchButton() {
   searchButton.textContent = submitting ? 'Searching...' : 'Search';
   document.getElementById('personal-link-guidance').hidden = !!personalCode;
   matchingNote.textContent = !personalCode ? 'A personal link is needed to search.'
-    : remaining === 0 ? `You’ve used all ${searchLimit} searches.`
-    : `${remaining} ${remaining === 1 ? 'search' : 'searches'} remaining. Maximum 300 words.`;
+    : `${remaining} searches left today. Maximum 300 words.`;
+  document.getElementById('results-search-count').textContent=personalCode?`${remaining} searches left today`:'';
 }
 
 function applySearchState(state) {
@@ -177,9 +184,12 @@ function applySearchState(state) {
   remaining = state.searchesRemaining;
   searchLimit = state.searchLimit;
   updateSearchButton();
+  clearTimeout(dailyRefreshTimer);
+  dailyRefreshTimer=setTimeout(refreshSearchCount,86400000-((Date.now()+19800000)%86400000)+500);
 }
 
 async function openPersonalLink() {
+  clearTimeout(matchRefreshTimer);
   searchVersion++;
   clearMatches();
   submitting?.abort();

@@ -4,8 +4,10 @@ import { internal } from "./_generated/api";
 import * as applications from "./operatorApplicationHttp";
 import {http as notify} from "./adminNotifications";
 import {decryptCode} from "./lib/operatorLinkSecrets";
+import {http as paymentAdmin} from "./revealPaymentHttp";
 
 const http=httpRouter();
+for(const path of ["/admin/payment-settings","/admin/payment-upload","/admin/payment-save","/admin/mark-paid","/admin/founder-matches"])http.route({path,method:"POST",handler:paymentAdmin});
 http.route({path:"/operator-signup/options",method:"GET",handler:applications.options});
 http.route({path:"/operator-signup",method:"POST",handler:applications.submit});
 http.route({path:"/admin/operator-applications",method:"POST",handler:applications.admin});
@@ -119,6 +121,7 @@ for(const path of ["/matches","/choice"]){
       const linkHash=Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,"0")).join("");
       if(path==="/matches"){
         const result=await ctx.runQuery(internal.choices.latest,{linkHash});
+        if(result?.ask&&result.matches.length<2&&await ctx.runMutation(internal.matchingRefreshStore.queueForFounder,{linkHash}))return reply({...result,refreshPending:true},200);
         return result?reply(result,200):reply({error:"Invalid link."},404);
       }
       if(typeof body.operatorId!=="string"||body.operatorId.length>100||!["Requested","Parked","Rejected"].includes(body.status))return reply({error:"Invalid choice."},400);

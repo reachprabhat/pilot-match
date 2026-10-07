@@ -3,6 +3,7 @@ import {paginationOptsValidator} from "convex/server";
 import {v} from "convex/values";
 import {applicationFields,applicationInput} from "./operatorApplicationValidators";
 import {validateApplication,matchingProfile,consentText} from "./lib/operatorApplication";
+import {internal} from "./_generated/api";
 
 export const submit=internalMutation({
   args:{input:applicationInput,submissionId:v.string()},returns:v.object({applicationId:v.id("operatorApplications"),status:v.literal("Pending")}),
@@ -44,6 +45,8 @@ export const approve=internalMutation({
       const input=validateApplication(application,legacyIndustry);
       await ctx.db.insert("operators",{operatorId,...matchingProfile(input,legacyIndustry)});
       await ctx.db.patch(application._id,{status:"Approved",operatorId,approvedAt:Date.now()});
+      await ctx.db.insert("operatorMatchJobs",{operatorId,status:"queued",providerCallCount:0});
+      await ctx.scheduler.runAfter(0,internal.operatorApprovalMatching.run,{operatorId});
     }
     const existingLink=await ctx.db.query("operatorLinks").withIndex("by_operator_id",q=>q.eq("operatorId",operatorId)).unique();
     if(!existingLink){

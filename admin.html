@@ -13,6 +13,7 @@
     <script src="/admin.js" defer></script>
     <script src="/admin-applications.js" defer></script>
     <script src="/admin-approved.js" defer></script>
+    <script src="/admin-growth.js" defer></script>
   </head>
   <body>
     <header class="brand-header"><div class="brand-lockup"><svg xmlns="http://www.w3.org/2000/svg" width="116" height="72" viewBox="0 12 96 60" aria-hidden="true"><g fill="currentColor"><path d="M0 28 14 12 28 25 13 44Z"/><path d="M96 28 82 12 68 25 83 44Z"/><path d="M17 30 31 18H43L75 49 75 55 68 62 62 67 55 71 49 69 24 45Z"/><path d="M79 30 65 18H53L33 33 33 37 38 41 42 40 51 33 73 54 82 43Z"/></g><g fill="none" stroke="var(--surface)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M49 43 69 62M43 50 61 67M37 57 51 70M14 43 27 26M82 43 69 26M33 33 33 37 38 41 42 40 51 33 73 54"/></g></svg><div><strong class="brand-wordmark">Besto</strong><p>Meet the best Operators</p></div></div></header>
@@ -56,6 +57,23 @@
         </section>
         <button id="admin-refresh" class="primary" type="button" hidden>Refresh requests</button>
       </section>
+        <section class="panel admin-panel" id="payments-section" aria-labelledby="payments-title" hidden>
+          <h2 id="payments-title">Introduction payments</h2>
+          <p>The first connection is free. Confirm later payments using Mark paid on the accepted request.</p>
+          <label for="payment-qr-file">UPI QR code</label>
+          <input id="payment-qr-file" type="file" accept="image/png,image/jpeg,image/webp" aria-describedby="payment-file-help">
+          <p id="payment-file-help">PNG, JPG or WebP. Maximum 2 MB.</p>
+          <img id="admin-payment-qr" class="payment-qr" alt="Saved UPI payment QR code" hidden>
+          <button id="payment-qr-save" type="button" class="primary">Upload QR code</button>
+          <p id="payment-settings-message" role="status"></p>
+        </section>
+        <section class="panel admin-panel" id="founder-notifications-section" aria-labelledby="founder-notifications-title" hidden>
+          <h2 id="founder-notifications-title">New operator matches</h2>
+          <p>These founders now have a new operator in their top two. Open WhatsApp, then send the message there.</p>
+          <p id="founder-notifications-message" role="status"></p>
+          <div id="founder-notifications-list"></div>
+          <button id="founder-notifications-refresh" type="button" class="secondary">Refresh new matches</button>
+        </section>
     </main>
     <footer class="brand-footer">Besto · Ask. Match. Meet.</footer>
   </body>

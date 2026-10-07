@@ -10,7 +10,7 @@ export const list=internalQuery({
     requestId:v.id("founderChoices"),founderId:v.string(),operatorId:v.string(),requestedAt:v.number(),
     status:v.union(v.literal("Requested"),v.literal("Accepted")),ask:v.string(),
     operatorName:v.string(),operatorPhone:v.string(),founderName:v.optional(v.string()),founderPhone:v.optional(v.string()),
-    industry:v.optional(v.string()),topFeatures:v.optional(v.array(v.string())),pilotsDone:v.optional(v.string()),why:v.optional(v.string()),founderCompany:v.optional(v.string()),operatorLinkHash:v.optional(v.string()),encryptedCode:v.optional(v.string()),notifiedAt:v.optional(v.number()),
+    industry:v.optional(v.string()),topFeatures:v.optional(v.array(v.string())),pilotsDone:v.optional(v.string()),why:v.optional(v.string()),founderCompany:v.optional(v.string()),operatorLinkHash:v.optional(v.string()),encryptedCode:v.optional(v.string()),notifiedAt:v.optional(v.number()),paymentStatus:v.optional(v.union(v.literal("Free"),v.literal("Paid"),v.literal("Locked"))),
   }),v.object({
     requestId:v.id("founderChoices"),founderId:v.string(),operatorId:v.string(),requestedAt:v.number(),
     status:v.literal("Declined"),founderName:v.string(),operatorName:v.string(),declinedAt:v.number(),
@@ -43,11 +43,14 @@ export const list=internalQuery({
       const operatorLink=await ctx.db.query("operatorLinks").withIndex("by_operator_id",q=>q.eq("operatorId",operator.operatorId)).unique();
       const secret=await ctx.db.query("operatorLinkSecrets").withIndex("by_operator_id",q=>q.eq("operatorId",operator.operatorId)).unique();
       const notification=await ctx.db.query("adminRequestNotifications").withIndex("by_request_identity",q=>q.eq("requestId",choice._id).eq("requestedAt",identity.requestedAt)).unique();
+      const access=response?.status==="Interested"?await ctx.db.query("founderOperatorAccess").withIndex("by_founder_operator",q=>q.eq("founderId",founder._id).eq("operatorId",choice.operatorId)).unique():null;
+      const allowance=await ctx.db.query("founderRevealAllowances").withIndex("by_founder",q=>q.eq("founderId",founder._id)).unique();
+      const paymentStatus=access?.free||access?.grandfathered||!access&&!allowance||!access&&allowance?.firstOperatorId===choice.operatorId?"Free" as const:access?.paidAt?"Paid" as const:"Locked" as const;
       requests.push({requestId:choice._id,founderId:founder.founderId,operatorId:choice.operatorId,requestedAt:identity.requestedAt,
         status:response?.status==="Interested"?"Accepted" as const:"Requested" as const,
         ask:clean(search.ask),operatorName:operator.name,operatorPhone:operator.whatsappNumber,founderCompany:founder.company,
         ...(operatorLink?{operatorLinkHash:operatorLink.linkHash}:{}),...(secret?{encryptedCode:secret.encryptedCode}:{}),...(notification?{notifiedAt:notification.notifiedAt}:{}),
-        ...(response?.status==="Interested"?{founderName:founder.name,founderPhone:founder.whatsappNumber}:{}),
+        ...(response?.status==="Interested"?{founderName:founder.name,founderPhone:founder.whatsappNumber,paymentStatus}:{}),
         ...(present(founder.industry)?{industry:clean(founder.industry)}:{}),
         ...(features.length?{topFeatures:features.map(clean)}:{}),
         ...(/^\d+(?:\s+pilots?(?:\s+(?:done|completed))?)?$/i.test(pilots)?{pilotsDone:pilots.match(/^\d+/)![0]}:{}),

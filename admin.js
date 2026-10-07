@@ -21,6 +21,10 @@ function addCard(request){
   contact('Operator',request.operatorName);contact('Operator WhatsApp',request.operatorPhone);
   if(request.status==='Accepted'){contact('Founder',request.founderName);contact('Founder WhatsApp',request.founderPhone);}
   article.append(contacts);
+  if(request.status==='Accepted'){
+    const payment=document.createElement('p');payment.className='payment-status';payment.textContent=request.paymentStatus??'Free';article.append(payment);
+    if(request.paymentStatus==='Locked'){const button=document.createElement('button');button.type='button';button.className='primary';button.textContent='Mark paid';article.append(button);button.addEventListener('click',async()=>{const current=version;button.disabled=true;try{const response=await fetch('/api/admin/mark-paid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,requestId:request.requestId,requestedAt:request.requestedAt}),cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(15000)});if(current!==version)return;if(!response.ok)throw Error();payment.textContent='Paid';button.remove();}catch{if(current===version){payment.textContent='Could not mark paid. Try again.';button.disabled=false;}}});}
+  }
   const detail=(label,value)=>{const section=document.createElement('section'),h=document.createElement('h3'),p=document.createElement('p');h.textContent=label;p.textContent=value;section.append(h,p);article.append(section);};
   detail('Pilot ask',request.ask);
   if(request.industry)detail('Product type',request.industry);

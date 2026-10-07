@@ -27,3 +27,4 @@ html:has(.connection-reveal[open]) { overflow: hidden; }
   .connection-reveal .connection-whatsapp { margin-top: auto; }
   .connection-reveal .connection-fact:last-of-type { margin-bottom: 32px; }
 }
+ .payment-qr {display:block;width:min(240px,100%);height:auto;aspect-ratio:1;object-fit:contain;margin:16px auto;background:#fff;border-radius:12px;}

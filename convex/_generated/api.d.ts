@@ -23,6 +23,7 @@ import type * as introductionWelcome from "../introductionWelcome.js";
 import type * as introductions from "../introductions.js";
 import type * as lib_enrichment from "../lib/enrichment.js";
 import type * as lib_evidenceSource from "../lib/evidenceSource.js";
+import type * as lib_fitList from "../lib/fitList.js";
 import type * as lib_matching from "../lib/matching.js";
 import type * as lib_meetingResponses from "../lib/meetingResponses.js";
 import type * as lib_operatorApplication from "../lib/operatorApplication.js";
@@ -30,11 +31,15 @@ import type * as lib_operatorLinkSecrets from "../lib/operatorLinkSecrets.js";
 import type * as lib_opportunity from "../lib/opportunity.js";
 import type * as lib_repairDash from "../lib/repairDash.js";
 import type * as matching from "../matching.js";
+import type * as matchingRefresh from "../matchingRefresh.js";
+import type * as matchingRefreshStore from "../matchingRefreshStore.js";
 import type * as matchingStore from "../matchingStore.js";
 import type * as matchingValidators from "../matchingValidators.js";
 import type * as operatorApplicationHttp from "../operatorApplicationHttp.js";
 import type * as operatorApplicationValidators from "../operatorApplicationValidators.js";
 import type * as operatorApplications from "../operatorApplications.js";
+import type * as operatorApprovalMatching from "../operatorApprovalMatching.js";
+import type * as operatorApprovalStore from "../operatorApprovalStore.js";
 import type * as operatorEnrichment from "../operatorEnrichment.js";
 import type * as operatorEnrichmentStore from "../operatorEnrichmentStore.js";
 import type * as operatorLinks from "../operatorLinks.js";
@@ -44,6 +49,8 @@ import type * as operatorResponses from "../operatorResponses.js";
 import type * as operatorRiskSearch from "../operatorRiskSearch.js";
 import type * as operatorRiskStore from "../operatorRiskStore.js";
 import type * as responseValidators from "../responseValidators.js";
+import type * as revealPaymentHttp from "../revealPaymentHttp.js";
+import type * as revealPayments from "../revealPayments.js";
 import type * as searchRules from "../searchRules.js";
 
 import type {
@@ -68,6 +75,7 @@ declare const fullApi: ApiFromModules<{
   introductions: typeof introductions;
   "lib/enrichment": typeof lib_enrichment;
   "lib/evidenceSource": typeof lib_evidenceSource;
+  "lib/fitList": typeof lib_fitList;
   "lib/matching": typeof lib_matching;
   "lib/meetingResponses": typeof lib_meetingResponses;
   "lib/operatorApplication": typeof lib_operatorApplication;
@@ -75,11 +83,15 @@ declare const fullApi: ApiFromModules<{
   "lib/opportunity": typeof lib_opportunity;
   "lib/repairDash": typeof lib_repairDash;
   matching: typeof matching;
+  matchingRefresh: typeof matchingRefresh;
+  matchingRefreshStore: typeof matchingRefreshStore;
   matchingStore: typeof matchingStore;
   matchingValidators: typeof matchingValidators;
   operatorApplicationHttp: typeof operatorApplicationHttp;
   operatorApplicationValidators: typeof operatorApplicationValidators;
   operatorApplications: typeof operatorApplications;
+  operatorApprovalMatching: typeof operatorApprovalMatching;
+  operatorApprovalStore: typeof operatorApprovalStore;
   operatorEnrichment: typeof operatorEnrichment;
   operatorEnrichmentStore: typeof operatorEnrichmentStore;
   operatorLinks: typeof operatorLinks;
@@ -89,6 +101,8 @@ declare const fullApi: ApiFromModules<{
   operatorRiskSearch: typeof operatorRiskSearch;
   operatorRiskStore: typeof operatorRiskStore;
   responseValidators: typeof responseValidators;
+  revealPaymentHttp: typeof revealPaymentHttp;
+  revealPayments: typeof revealPayments;
   searchRules: typeof searchRules;
 }>;
 
