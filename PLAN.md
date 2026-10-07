@@ -41,3 +41,5 @@ WhatsApp link extension shipped after dev checks: live exact message/new-tab beh
 
 ## Approved extension: Besto branding
 Owner approved dev first then deploy. Shared header/footer on landing, ask, results, operator requests, both reveals, admin and recovery states; WhatsApp drafts say introduced through Besto. Parked no-personal-link Ask issue addressed with guidance only; other parked ideas stay parked. Dev proof followed by live 390px screenshots and production-data comparison.
+
+Complete: Besto branding dev tested, deployed, and all live 390px screen states captured; underlying production data and links unchanged.
