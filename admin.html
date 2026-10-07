@@ -13,6 +13,7 @@
     <script src="/admin.js" defer></script>
     <script src="/admin-applications.js" defer></script>
     <script src="/admin-approved.js" defer></script>
+    <script src="/admin-payments.js" defer></script>
   </head>
   <body>
     <header class="brand-header"><div class="brand-lockup"><svg xmlns="http://www.w3.org/2000/svg" width="116" height="72" viewBox="0 12 96 60" aria-hidden="true"><g fill="currentColor"><path d="M0 28 14 12 28 25 13 44Z"/><path d="M96 28 82 12 68 25 83 44Z"/><path d="M17 30 31 18H43L75 49 75 55 68 62 62 67 55 71 49 69 24 45Z"/><path d="M79 30 65 18H53L33 33 33 37 38 41 42 40 51 33 73 54 82 43Z"/></g><g fill="none" stroke="var(--surface)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M49 43 69 62M43 50 61 67M37 57 51 70M14 43 27 26M82 43 69 26M33 33 33 37 38 41 42 40 51 33 73 54"/></g></svg><div><strong class="brand-wordmark">Besto</strong><p>Meet the best Operators</p></div></div></header>
@@ -29,7 +30,7 @@
           </section>
           <section aria-labelledby="accepted-title">
             <h2 id="accepted-title">Accepted requests</h2>
-            <p>Send the introduction to the founder and operator by hand.</p>
+            <p>For locked founder reveals, check payment before tapping Mark paid.</p>
             <p id="accepted-empty">No accepted requests.</p>
             <div id="accepted-list"></div>
           </section>
@@ -40,6 +41,18 @@
           </section>
           <button id="admin-more" class="secondary" type="button" hidden>Show more requests</button>
         </div>
+        <section id="reveal-settings-section" aria-labelledby="reveal-settings-title" hidden>
+          <h2 id="reveal-settings-title">Founder reveal payments</h2>
+          <p>Each founder’s first accepted operator is free. Later operators unlock when you mark payment received.</p>
+          <form id="reveal-settings-form">
+            <label for="reveal-price">Price (₹)</label>
+            <input id="reveal-price" name="price" type="number" min="0.01" max="10000000" step="0.01" required />
+            <label for="reveal-payment-link">Payment link</label>
+            <input id="reveal-payment-link" name="paymentLink" type="url" maxlength="2000" placeholder="https://" required />
+            <button id="reveal-settings-save" class="primary" type="submit">Save payment settings</button>
+          </form>
+          <p id="reveal-settings-message" role="status"></p>
+        </section>
         <section id="applications-section" aria-labelledby="applications-title" hidden>
           <h2 id="applications-title">Pending operators</h2>
           <p id="applications-message" role="status"></p>
