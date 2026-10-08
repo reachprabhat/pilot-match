@@ -4,6 +4,7 @@ html:has(.connection-reveal[open]) { overflow: hidden; }
 .connection-card + .connection-card { margin-top: 24px; }
 .connection-card h2 { font-size: 20px; line-height: 1.4; margin: 0 0 16px; }
 .connection-card p { margin: 0; }
+.connection-card .payment-status { margin-bottom: 16px; }
 .connection-card .connection-welcome { margin-bottom: 32px; }
 .connection-card .connection-name { font-size: 20px; line-height: 1.4; margin-bottom: 8px; }
 .connection-phone { font-variant-numeric: tabular-nums; }

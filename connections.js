@@ -4,12 +4,24 @@
   const prefix = role === 'operator' ? 'o' : 'f';
   const main = document.querySelector('main');
   const cards = document.createElement('section');
-  cards.id = 'connections'; cards.hidden = true; cards.setAttribute('aria-label', 'Your accepted connections');
-  main.prepend(cards);
+  cards.id = 'connections'; cards.hidden = true; cards.setAttribute('aria-label', role === 'founder' ? 'Your operators' : 'Your accepted connections');
+  const founderCards = document.getElementById('confirmed-cards');
+  if (role === 'founder' && founderCards) founderCards.append(cards);
+  else main.prepend(cards);
+  const empty = role === 'founder' ? document.getElementById('confirmed-empty') : null;
   const dialog = document.createElement('dialog');
   dialog.className = 'connection-reveal'; dialog.setAttribute('aria-labelledby', 'connection-title');
   document.body.append(dialog);
   let version = 0, controller, code, timer, active, queue = [], seen = new Set();
+  let pendingNoticeShown = false, pendingNoticeDismissed = false;
+  const onConnectionScreen = () => role === 'operator' || new URL(location.href).searchParams.get('screen') === 'results';
+  const clearPendingNotice = () => {
+    if (pendingNoticeShown) pendingNoticeDismissed = true;
+    cards.querySelector('[data-connection-error]')?.remove();
+    if (!cards.childElementCount) cards.hidden = true;
+  };
+  window.addEventListener('besto:founder-screen-changed', clearPendingNotice);
+  window.addEventListener('popstate', clearPendingNotice);
   const key = row => row.requestId + ':' + row.requestedAt + ':' + (row.locked?'locked':'open');
   const clear = () => { dialog.close(); dialog.replaceChildren(); cards.replaceChildren(); cards.hidden = true; active = undefined; queue = []; };
   const post = async (path, body, signal) => {
@@ -20,6 +32,26 @@
   function details(row, fullScreen = false) {
     const article = document.createElement('article'); article.className = 'connection-card';
     article.dataset.requestId = row.requestId;
+    if (role === 'founder' && !fullScreen) {
+      article.dataset.operatorId = row.operatorId || '';
+      const label = document.createElement('h2');
+      label.textContent = Number.isSafeInteger(row.operatorNumber) && row.operatorNumber > 0 ? `Operator ${row.operatorNumber}` : 'Operator';
+      article.append(label);
+    }
+    if (role === 'founder' && !fullScreen) {
+      const status = document.createElement('p');
+      status.className = 'meeting-status'; status.textContent = row.locked ? 'Locked until payment' : row.status || 'Accepted';
+      article.append(status);
+      if (row.paymentLabel) {
+        const payment = document.createElement('p'); payment.className = 'payment-status';
+        payment.textContent = row.paymentLabel; article.append(payment);
+      }
+    }
+    if (row.status) {
+      const note = document.createElement('p');
+      note.textContent = row.status === 'Requested' ? 'Waiting for the operator to respond.' : row.status === 'Declined' ? 'The operator declined this request.' : 'Your accepted introduction is being prepared.';
+      article.append(note); return article;
+    }
     if(row.locked){
       const heading=document.createElement(fullScreen?'h1':'h2');heading.textContent='Accepted. Pay to see who it is.';
       if(fullScreen){heading.id='connection-title';heading.tabIndex=-1;}
@@ -85,22 +117,26 @@
   dialog.addEventListener('cancel', event => {event.preventDefault(); dialog.querySelector('.connection-continue')?.click();});
   async function refresh(reset = false, allowReveal = false) {
     const fragment = new RegExp('^#' + prefix + '=([A-Za-z0-9_-]{43})$').exec(location.hash);
-    if (reset) { version++; controller?.abort(); clearTimeout(timer); clear(); seen.clear(); }
+    if (reset) { version++; controller?.abort(); clearTimeout(timer); clear(); seen.clear(); pendingNoticeShown = false; pendingNoticeDismissed = false; }
     code = fragment?.[1];
     if (!code || document.hidden) return;
     const currentVersion = version;
     controller?.abort(); controller = new AbortController(); const signal = controller.signal;
     try {
-      let cursor = null, rows = [], pending = false;
+      let cursor = null, rows = [], pending = false, failed = false;
       do {
         const result = await post('introductions', {cursor}, signal);
         if (currentVersion !== version || signal.aborted) return;
-        rows.push(...result.introductions); pending ||= result.pending;
+        rows.push(...result.introductions); pending ||= result.pending; failed ||= result.failed === true;
         cursor = result.isDone ? null : result.continueCursor;
       } while (cursor);
-      cards.replaceChildren(...rows.map(row => details(row))); cards.hidden = rows.length === 0 && !pending;
-      if (pending) {
-        const notice = document.createElement('p'); notice.className = 'connection-card'; notice.textContent = 'Busy right now. Try again in a few minutes.'; notice.setAttribute('role', 'status'); cards.append(notice);
+      const showPending = failed && onConnectionScreen() && !pendingNoticeDismissed;
+      if (role === 'founder') window.dispatchEvent(new CustomEvent('besto:requested-operators', {detail: rows.map(row => row.operatorId).filter(Boolean)}));
+      cards.replaceChildren(...rows.map(row => details(row))); cards.hidden = rows.length === 0 && !showPending;
+      if (empty) {empty.hidden = rows.length > 0; empty.textContent = 'No requested operators yet. Request to meet a best-fit operator to get started.';}
+      if (showPending) {
+        pendingNoticeShown = true;
+        const notice = document.createElement('p'); notice.dataset.connectionError = 'true'; notice.className = 'connection-card'; notice.textContent = 'Busy right now. Try again in a few minutes.'; notice.setAttribute('role', 'status'); cards.append(notice);
       }
       if (active && !rows.some(row => key(row) === key(active) && Boolean(row.locked)===Boolean(active.locked))) { dialog.close(); dialog.replaceChildren(); active = undefined; }
       if (allowReveal && !active) {
@@ -112,6 +148,7 @@
     } catch {
       if (currentVersion !== version || signal.aborted) return;
       clear(); clearTimeout(timer);
+      if (empty) {empty.hidden = false; empty.textContent = 'Your operators could not load. Reload to try again.';}
       timer = setTimeout(() => refresh(false, allowReveal), 15000);
     }
   }

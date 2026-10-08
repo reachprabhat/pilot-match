@@ -24,7 +24,9 @@ export const admin=httpAction(async(ctx,request)=>{
     if(new URL(request.url).pathname.endsWith("/approve")){
       if(typeof body.applicationId!=="string"||body.applicationId.length>100)return reply({error:"Invalid application."},400);
       const result=await ctx.runMutation(internal.operatorApplications.approve,{linkHash,applicationId:body.applicationId,...await proposedLink(body.code,"joined-"+body.applicationId)});
-      return result?reply(result):reply({error:"Access denied or application unavailable."},404);
+      if(!result)return reply({error:"Access denied or application unavailable."},404);
+      const [operatorNumber]=await ctx.runQuery(internal.operatorNumbers.labels,{operatorIds:[result.operatorId]});
+      return reply({...result,operatorNumber});
     }
     if(body.cursor!=null&&(typeof body.cursor!=="string"||body.cursor.length>1500))return reply({error:"Invalid request."},400);
     if(new URL(request.url).pathname.endsWith("/approved-operators")){

@@ -1,9 +1,10 @@
 import {internalMutation,internalQuery} from "./_generated/server";
 import {v} from "convex/values";
 import {searchState,dailySearchState,indiaDay,SEARCH_LIMIT} from "./searchRules";
-import {eligibleMatches,excludedOperators} from "./lib/fitList";
+import {strongMatches,excludedOperators} from "./lib/fitList";
 import {matchValidator,matchingResultValidator} from "./matchingValidators";
 import {prepareInput} from "./lib/matching";
+import {safeWelcomeError as safeAiError} from "./lib/safeWelcomeError";
 
 export const reserve=internalMutation({
   args:{linkHash:v.string(),requestId:v.string(),ask:v.string()},
@@ -19,18 +20,19 @@ export const reserve=internalMutation({
     if(existing && existing.ask!==ask)return {status:"invalid_ask" as const};
     if(existing) {
       if(existing.ask!==ask)return {status:"invalid_ask" as const};
-      if(existing.status==="completed" && existing.matches)return {status:"matched" as const,matches:(await eligibleMatches(ctx,founder._id,existing.matches)).slice(0,2),...state};
+      if(existing.status==="completed" && existing.matches)return {status:"matched" as const,matches:(await strongMatches(ctx,founder._id,existing.originalMatches??existing.matches)).slice(0,2),...state};
+      console.warn("Founder search unavailable",{requestId:safeAiError(args.requestId,process.env.OPENAI_API_KEY),errorMessage:`Existing search is ${existing.status??"not completed"}`});
       return {status:"busy" as const};
     }
     if(state.searchCount>=SEARCH_LIMIT)return {status:"limit_reached" as const,...state};
     const now=Date.now();
     const running=await ctx.db.query("founderSearches").withIndex("by_founder_status",q=>q.eq("founderId",founder._id).eq("status","running")).take(1);
     if(running[0]) {
-      if(now-running[0].savedAt<90000)return {status:"busy" as const};
+      if(now-running[0].savedAt<90000){console.warn("Founder search unavailable",{requestId:safeAiError(args.requestId,process.env.OPENAI_API_KEY),errorMessage:"Another founder search is still running"});return {status:"busy" as const};}
       await ctx.db.patch(running[0]._id,{status:"failed"});
     }
     const recent=await ctx.db.query("aiCalls").withIndex("by_started_at",q=>q.gte("startedAt",now-3600000)).take(100);
-    if(recent.length>=100)return {status:"busy" as const};
+    if(recent.length>=100){console.warn("Founder search unavailable",{requestId:safeAiError(args.requestId,process.env.OPENAI_API_KEY),errorMessage:"Hourly AI call cap reached (100)"});return {status:"busy" as const};}
     const runId=await ctx.db.insert("aiCalls",{founderId:founder._id,startedAt:now,purpose:"founder_matching"});
     const searchId=await ctx.db.insert("founderSearches",{founderId:founder._id,ask,requestId:args.requestId,savedAt:now,status:"running",runId,resetVersion:founder.searchResetVersion??0,searchDay:indiaDay(now)});
     return {status:"reserved" as const,searchId,founderDocId:founder._id};
@@ -62,9 +64,9 @@ export const complete=internalMutation({
     if(search.searchDay!==indiaDay())return {status:"busy" as const};
     if(state.searchCount>=SEARCH_LIMIT)return {status:"limit_reached" as const,...state};
     if(args.matches.length>6 || new Set(args.matches.map(match=>match.operatorId)).size!==args.matches.length || args.matches.some(match=>!Number.isInteger(match.score)||match.score<0||match.score>100))throw Error("Invalid matches");
-    const eligible=await eligibleMatches(ctx,founder._id,args.matches);
-    await ctx.db.patch(search._id,{status:"completed",matches:args.matches,responseId:args.responseId});
-    const charge=args.matches.length?1:0;
+    const eligible=await strongMatches(ctx,founder._id,args.matches);
+    await ctx.db.patch(search._id,{status:"completed",matches:args.matches,originalMatches:args.matches,responseId:args.responseId});
+    const charge=1;
     await ctx.db.patch(founder._id,{searchCount:state.searchCount+charge,searchDay:indiaDay(),activeSearchId:search._id});
     return {status:"matched" as const,matches:eligible.slice(0,2),...searchState(state.searchCount+charge)};
   },

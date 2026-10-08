@@ -110,6 +110,17 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
 #match-cards .choice-status { margin-top: 16px; min-height: 26px; font-weight: 600; }
 .choice-status.error { color: var(--error); font-weight: 400; }
 ::selection { background: var(--line); color: var(--ink); }
+#confirmed-operators { width: min(100%, 680px); }
+#confirmed-title:focus { outline: none; }
+main:not(.founder-home) #confirmed-empty { display: none; }
+main.founder-home { align-content: start; gap: 32px; }
+.founder-home #matches { min-height: 0; padding: 0; border: 0; background: transparent; }
+.founder-home #match-cards { grid-template-columns: 1fr; }
+.founder-home #match-cards article { padding: 24px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.founder-home #match-cards .choice-actions { margin-top: 24px; padding-top: 0; }
+.founder-home #confirmed-empty { margin: 0; }
+.founder-home #connections { margin-bottom: 0; }
+.connection-card .meeting-status { margin-bottom: 16px; color: var(--accent); font-weight: 600; }
 #landing-how { display: none; }
 @media (max-width: 600px) {
   .brand-header, .brand-footer { width: calc(100% - 32px); }

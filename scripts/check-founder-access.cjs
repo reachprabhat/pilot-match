@@ -1,9 +1,9 @@
 const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');const esbuild=require('esbuild');const crypto=require('node:crypto');
 const validator=new Proxy(()=>validator,{get:()=>validator});
-function load(file,require){const context={module:{exports:{}},require,Response,Request,TextEncoder,crypto:crypto.webcrypto};vm.runInNewContext(esbuild.transformSync(fs.readFileSync(file,'utf8'),{loader:'ts',format:'cjs'}).code,context);return context.module.exports;}
+function load(file,require){const context={module:{exports:{}},require,Response,Request,TextEncoder,crypto:crypto.webcrypto,process:{env:{}},console:{warn:()=>{}}};vm.runInNewContext(esbuild.transformSync(fs.readFileSync(file,'utf8'),{loader:'ts',format:'cjs'}).code,context);return context.module.exports;}
 const rules=load('convex/searchRules.ts',()=>({v:validator}));
 const founders=load('convex/founders.ts',n=>n==='./_generated/server'?{internalMutation:x=>x,internalQuery:x=>x}:n==='./searchRules'?rules:{v:validator});
-const routes=[];load('convex/http.ts',n=>n==='convex/server'?{httpRouter:()=>({route:r=>routes.push(r)})}:n==='./_generated/server'?{httpAction:x=>x}:{internal:{founders:{resolvePersonalLink:'resolve'},matching:{run:'submit'}}});
+const routes=[];load('convex/http.ts',n=>n==='./lib/safeWelcomeError'?load('convex/lib/safeWelcomeError.ts',()=>{}):n==='convex/server'?{httpRouter:()=>({route:r=>routes.push(r)})}:n==='./_generated/server'?{httpAction:x=>x}:{internal:{founders:{resolvePersonalLink:'resolve'},matching:{run:'submit'},operatorNumbers:{labels:'labels'}}});
 const route=routes.find(r=>r.path==='/founder');
 (async()=>{
 const code='a'.repeat(43);const hash=crypto.createHash('sha256').update(code).digest('hex');
@@ -20,9 +20,9 @@ await assert.rejects(founders.setPersonalLink.handler(mutationCtx,{founderId:'fi
 assert.equal(await founders.resolvePersonalLink.handler({db},{linkHash:'bad'}),null);
 const search=routes.find(r=>r.path==='/search');
 const payload=JSON.stringify({code,ask:'A fictional pilot',requestId:'example-request-1'});
-response=await search.handler({runAction:async(fn,args)=>{assert.equal(fn,'submit');assert.equal(args.linkHash,hash);assert.equal(Object.hasOwn(args,'code'),false);return {status:'matched',searchCount:1,searchLimit:3,searchesRemaining:2};}},request(payload));
+response=await search.handler({runQuery:async()=>[],runAction:async(fn,args)=>{assert.equal(fn,'submit');assert.equal(args.linkHash,hash);assert.equal(Object.hasOwn(args,'code'),false);return {status:'matched',matches:[],searchCount:1,searchLimit:3,searchesRemaining:2};}},request(payload));
 assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'no-store');
-assert.deepEqual(await response.json(),{status:'matched',searchCount:1,searchLimit:3,searchesRemaining:2});
+assert.deepEqual(await response.json(),{status:'matched',matches:[],searchCount:1,searchLimit:3,searchesRemaining:2});
 assert.equal((await search.handler({runAction:async()=>({status:'limit_reached',searchCount:3,searchLimit:3,searchesRemaining:0})},request(payload))).status,429);
 assert.equal((await search.handler({runAction:async()=>{throw Error('Database failure');}},request(payload))).status,503);
 for(const body of ['{','{}',JSON.stringify({code}),JSON.stringify({code:'bad'})])assert.ok([400,404].includes((await search.handler({},request(body))).status));

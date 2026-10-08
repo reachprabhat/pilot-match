@@ -114,3 +114,16 @@ Admin approved operators: reuse existing section/card typography and spacing; na
 
 ## Dev daily matches and QR reveal states
 Reuse the existing navy/cream/Inter header, footer and cards. Results title: Your best-fit operators. Show X searches left today on Ask and Results. Locked founder reveal keeps the existing full-screen shell, shows Accepted. Pay to see who it is., a centred 240px saved QR and waiting instructions; no identity or WhatsApp button until owner Mark paid. Admin Payments and New operator matches panels reuse existing admin styling. Notify founder stays WhatsApp green #25D366 with white text. Operator and ordinary revealed card layouts remain unchanged.
+
+
+## Returning founder home (dev only)
+Personal links reopen at home with Your operators, Your best-fit operators, and Search for new operators in that order. Your operators lists every saved request once under its public operator number, with latest Requested, Accepted, Declined or Locked until payment status. Only existing allowed reveals show identity and WhatsApp; locked cards retain the QR payment flow. Best-fit cards remain capped at two and exclude all request history. Saved scores, explanation and search allowance remain unchanged. Preserve navy/cream/Inter, 16px corners and phone spacing. A successful search opens results with clearly separate operator-history and best-fit sections; Back to my home returns to the ask.
+
+
+Best-fit results show only eligible saved scores of 80 or more, at most two. When none qualify, show exactly: "No strong match yet. Besto's AI will notify you when a better-fit operator joins." Preserve Your operators and all payment/reveal UI. Every completed search spends one daily search even when no candidate qualifies; errors remain uncharged.
+
+
+Each search has at most its original top two scored operators, both subject to the 80 floor. Rank three or lower never fills a requested slot. When both original qualifying matches are requested, the best-fit section contains no cards and exactly: "You've requested both matches from this search. Search again for new operators." Your operators and existing reveal/payment cards remain unchanged.
+
+
+Accepted founder/admin cards share payment labels: Free (first connect), Payment pending, or Paid, marked <saved date/time> IST. Display uses saved paidAt before free status, independent of grandfathered access. Founder cards place payment label after meeting status. QR, locks, reveal and operator layout remain unchanged.

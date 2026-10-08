@@ -17,7 +17,7 @@ export default defineSchema({
   adminRequestNotifications:defineTable({requestId:v.id("founderChoices"),requestedAt:v.number(),notifiedAt:v.number()}).index("by_request_identity",["requestId","requestedAt"]),
   operatorApplications:defineTable({...applicationFields,industrySelectionVersion:v.optional(v.literal(1)),submissionId:v.string(),consentText:v.string(),consentedAt:v.number(),status:v.union(v.literal("Pending"),v.literal("Approved")),operatorId:v.optional(v.string()),approvedAt:v.optional(v.number())})
     .index("by_status",["status"]).index("by_submission_id",["submissionId"]),
-  introductions: defineTable({requestId:v.id("founderChoices"),searchId:v.id("founderSearches"),requestedAt:v.number(),founderId:v.id("founders"),operatorId:v.string(),status:v.union(v.literal("queued"),v.literal("running"),v.literal("ready"),v.literal("failed")),welcome:v.optional(v.string()),responseId:v.optional(v.string()),callId:v.optional(v.id("aiCalls")),providerCallCount:v.optional(v.number()),founderSeenAt:v.optional(v.number()),operatorSeenAt:v.optional(v.number())})
+  introductions: defineTable({requestId:v.id("founderChoices"),searchId:v.id("founderSearches"),requestedAt:v.number(),founderId:v.id("founders"),operatorId:v.string(),status:v.union(v.literal("queued"),v.literal("running"),v.literal("ready"),v.literal("failed")),welcome:v.optional(v.string()),responseId:v.optional(v.string()),callId:v.optional(v.id("aiCalls")),providerCallCount:v.optional(v.number()),automaticRetryUsed:v.optional(v.boolean()),automaticRetryProviderCallCount:v.optional(v.number()),retryNotBefore:v.optional(v.number()),diagnosticRetryUsed:v.optional(v.boolean()),diagnosticProviderCallCount:v.optional(v.number()),founderSeenAt:v.optional(v.number()),operatorSeenAt:v.optional(v.number())})
     .index("by_request_identity",["requestId","requestedAt"]).index("by_founder",["founderId"]),
   adminLinks: defineTable({owner:v.literal("Prabhat"),linkHash:v.string()})
     .index("by_owner",["owner"]).index("by_link_hash",["linkHash"]),
@@ -38,10 +38,11 @@ export default defineSchema({
   founderSearches: defineTable({
     founderId: v.id("founders"), requestId: v.string(), ask: v.string(), savedAt: v.number(),
     status:v.optional(v.union(v.literal("running"),v.literal("completed"),v.literal("failed"))),
-    matches:v.optional(v.array(matchValidator)),runId:v.optional(v.id("aiCalls")),resetVersion:v.optional(v.number()),responseId:v.optional(v.string()),searchDay:v.optional(v.string()),refreshState:v.optional(v.union(v.literal("queued"),v.literal("running"),v.literal("failed"))),candidateVersion:v.optional(v.number()),refreshVersion:v.optional(v.number()),
+    originalMatches:v.optional(v.array(matchValidator)),matches:v.optional(v.array(matchValidator)),runId:v.optional(v.id("aiCalls")),resetVersion:v.optional(v.number()),responseId:v.optional(v.string()),searchDay:v.optional(v.string()),refreshState:v.optional(v.union(v.literal("queued"),v.literal("running"),v.literal("failed"))),candidateVersion:v.optional(v.number()),refreshVersion:v.optional(v.number()),
   }).index("by_founder_request", ["founderId", "requestId"]).index("by_founder_status",["founderId","status"]).index("by_founder_status_saved_at",["founderId","status","savedAt"]).index("by_founder_ask_status",["founderId","ask","status"]),
   operators: defineTable({
     operatorId: v.string(),
+    operatorNumber: v.optional(v.number()),
     name: v.string(),
     whatsappNumber: v.string(),
     headline: v.string(),
@@ -59,9 +60,10 @@ export default defineSchema({
     riskSearch: v.optional(enrichmentValidator),
   }).index("by_operator_id", ["operatorId"]),
   aiCalls: defineTable({
+    diagnosticSearchId:v.optional(v.id("founderSearches")),
     operatorId: v.optional(v.string()),founderId:v.optional(v.id("founders")),
     startedAt: v.number(),
     purpose: v.union(v.literal("operator_enrichment"),v.literal("founder_matching"),v.literal("accepted_welcome"),v.literal("operator_approval_matching")),
     introductionId:v.optional(v.id("introductions")),
-  }).index("by_started_at", ["startedAt"]),
+  }).index("by_started_at", ["startedAt"]).index("by_diagnostic_search",["diagnosticSearchId"]),
 });

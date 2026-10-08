@@ -71,3 +71,23 @@ Built and browser-verified on neat-hyena-46. Show Your best-fit operators with t
 First accepted unique operator per founder stays free; later founder reveals show the admin-uploaded QR until owner Mark paid. Existing seen intros were grandfathered once. Operator-side acceptance and reveals remain unchanged. Contacts and saved welcomes are omitted from locked replies. Existing reveal welcome generation stays once per accepted request.
 New approval creates one queued batch job and makes one AI call across the complete eligible operator pool and all current saved founder asks, with anonymous profiles only. It updates the saved top-two list, preserves requested card details, and lists qualifying founders privately with the exact green Notify founder WhatsApp draft and their unchanged personal link. Global AI cap remains shared. No automatic WhatsApp sends.
 Proof completed at 390px: search 3 to 2, eligible list after first connect, first free reveal, locked second QR reveal, second reveal after owner Mark paid, and new-operator Notify list. QR proof uses a clearly labelled non-payment demo image because no real UPI QR was supplied. Production was neither accessed nor deployed. Next: upload the real UPI QR in dev admin and review on the phone.
+
+
+## Approved operator numbering fix (dev only)
+Owner retained the real self-signup operator and authorised deletion of five Demo operators and their linked records. Imported operators 1-10 remain byte-for-byte unchanged. Retained signup receives public number 11; future approvals allocate the next public number transactionally, starting at 12. Internal IDs and links remain unchanged. Founder headings use public numbers and never fall back to internal IDs. No matching, score, quota or paywall changes; production not accessed. Dev proof completed.
+
+
+## Approved returning founder home (dev only)
+Implemented and checked the three home sections in the approved order: confirmed operators with Accepted status, one eligible saved recommendation with Request to meet, then the existing ask and daily allowance. Reopening an old results link starts at home. New searches retain two-card results. Actual 390px proof complete; all application records exactly unchanged. Next: owner reviews the existing dev founder link on a phone.
+
+
+## Approved requested-operator history fix (dev only)
+Show Your operators from saved request history with latest Requested/Accepted/Declined/Locked until payment status. Keep best-fit candidates separate, at most two, excluding all requested operators. Preserve scores, profile rows and reveal/payment rules. Actual 390px screenshots show both existing requests and two eligible best-fit cards; application data remains identical. Next: owner reviews the existing dev founder link.
+
+
+## Approved strong-match cutoff (dev only)
+Visible and requestable best-fit results require score >=80, still at most two and excluding all requested history. Keep saved candidate scores intact. Completed searches with no strong candidates count once; replay does not count again and failures remain uncharged. Exact approved empty message and 390px matches/none proof verified using fictional search replies. Real application data unchanged. Next: owner reviews the existing dev link.
+
+
+## Approved fixed original top two (dev only)
+Select the original top two before excluding requested history, rather than promoting lower ranks. Future completions retain an immutable original scoring snapshot; legacy searches derive the original pair from their saved pool. Saved results use the latest completed search only. Disable automatic replacements/refill jobs; approval updates cannot replace the original pair. Show the approved both-requested message and no best-fit cards after both requests. Real founder 2 proof complete at 390px with all application records unchanged. Next: owner reopens the existing dev link.

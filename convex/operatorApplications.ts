@@ -4,6 +4,7 @@ import {v} from "convex/values";
 import {applicationFields,applicationInput} from "./operatorApplicationValidators";
 import {validateApplication,matchingProfile,consentText} from "./lib/operatorApplication";
 import {internal} from "./_generated/api";
+import {nextOperatorNumber} from "./lib/operatorNumbers";
 
 export const submit=internalMutation({
   args:{input:applicationInput,submissionId:v.string()},returns:v.object({applicationId:v.id("operatorApplications"),status:v.literal("Pending")}),
@@ -43,7 +44,8 @@ export const approve=internalMutation({
     const operatorId=application.operatorId??"joined-"+application._id;
     if(application.status!=="Approved"){
       const input=validateApplication(application,legacyIndustry);
-      await ctx.db.insert("operators",{operatorId,...matchingProfile(input,legacyIndustry)});
+      const operatorNumber=await nextOperatorNumber(ctx);
+      await ctx.db.insert("operators",{operatorId,operatorNumber,...matchingProfile(input,legacyIndustry)});
       await ctx.db.patch(application._id,{status:"Approved",operatorId,approvedAt:Date.now()});
       await ctx.db.insert("operatorMatchJobs",{operatorId,status:"queued",providerCallCount:0});
       await ctx.scheduler.runAfter(0,internal.operatorApprovalMatching.run,{operatorId});

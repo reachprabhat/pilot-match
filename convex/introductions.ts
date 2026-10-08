@@ -4,11 +4,15 @@ import {v} from "convex/values";
 import {paginationOptsValidator} from "convex/server";
 import {currentResponse} from "./lib/meetingResponses";
 import {accessFor} from "./revealPayments";
+import {publicOperatorNumber} from "./lib/operatorNumbers";
+import {paymentLabel} from "./lib/paymentLabel";
 
 export const roleValidator=v.union(v.literal("founder"),v.literal("operator"));
-const contactValidator=v.object({requestId:v.id("founderChoices"),requestedAt:v.number(),welcome:v.string(),name:v.string(),whatsappNumber:v.string(),senderName:v.string(),senderCompany:v.optional(v.string()),company:v.optional(v.string()),location:v.optional(v.string()),seen:v.boolean()});
+const operatorLabel={operatorId:v.optional(v.string()),operatorNumber:v.optional(v.union(v.number(),v.null())),paymentLabel:v.optional(v.string())};
+const contactValidator=v.object({...operatorLabel,requestId:v.id("founderChoices"),requestedAt:v.number(),welcome:v.string(),name:v.string(),whatsappNumber:v.string(),senderName:v.string(),senderCompany:v.optional(v.string()),company:v.optional(v.string()),location:v.optional(v.string()),seen:v.boolean()});
 const known=(value:string)=>!/^\s*(?:not found|not provided|unknown|n\/?a|none|-)?\s*$/i.test(value);
-const lockedValidator=v.object({requestId:v.id("founderChoices"),requestedAt:v.number(),locked:v.literal(true),seen:v.literal(false),qrUrl:v.union(v.string(),v.null())});
+const lockedValidator=v.object({...operatorLabel,requestId:v.id("founderChoices"),requestedAt:v.number(),locked:v.literal(true),seen:v.literal(false),qrUrl:v.union(v.string(),v.null())});
+const statusValidator=v.object({...operatorLabel,requestId:v.id("founderChoices"),requestedAt:v.number(),status:v.union(v.literal("Requested"),v.literal("Accepted"),v.literal("Declined")),seen:v.literal(true)});
 
 export const ensureAccepted=internalMutation({
   args:{requestId:v.id("founderChoices")},returns:v.null(),
@@ -30,7 +34,7 @@ export const ensureAccepted=internalMutation({
 // A link is checked before any request or contact is read. Raw codes never reach storage.
 export const list=internalMutation({
   args:{linkHash:v.string(),role:roleValidator,paginationOpts:paginationOptsValidator},
-  returns:v.union(v.null(),v.object({introductions:v.array(v.union(contactValidator,lockedValidator)),pending:v.boolean(),isDone:v.boolean(),continueCursor:v.string()})),
+  returns:v.union(v.null(),v.object({introductions:v.array(v.union(contactValidator,lockedValidator,statusValidator)),pending:v.boolean(),failed:v.boolean(),isDone:v.boolean(),continueCursor:v.string()})),
   handler:async(ctx,args)=>{
     const founder=args.role==="founder"?await ctx.db.query("founders").withIndex("by_link_hash",q=>q.eq("linkHash",args.linkHash)).unique():null;
     const operatorLink=args.role==="operator"?await ctx.db.query("operatorLinks").withIndex("by_link_hash",q=>q.eq("linkHash",args.linkHash)).unique():null;
@@ -38,12 +42,19 @@ export const list=internalMutation({
     const sender=founder??await ctx.db.query("operators").withIndex("by_operator_id",q=>q.eq("operatorId",operatorLink!.operatorId)).unique();
     if(!sender)return null;
     const page=founder
-      ?await ctx.db.query("founderChoices").withIndex("by_founder_status",q=>q.eq("founderId",founder._id).eq("status","Requested")).paginate(args.paginationOpts)
+      ?await ctx.db.query("operatorRequests").withIndex("by_founder",q=>q.eq("founderId",founder._id)).paginate(args.paginationOpts)
       :await ctx.db.query("founderChoices").withIndex("by_operator_status",q=>q.eq("operatorId",operatorLink!.operatorId).eq("status","Requested")).paginate(args.paginationOpts);
-    const introductions=[];let pending=false;
-    for(const choice of page.page){
+    const introductions=[];let pending=false,failed=false;
+    for(const row of page.page){
+      const choice=founder?await ctx.db.query("founderChoices").withIndex("by_founder_operator",q=>q.eq("founderId",founder._id).eq("operatorId",row.operatorId)).unique():row as import("./_generated/dataModel").Doc<"founderChoices">;
+      if(!choice)continue;
+      const operator=founder?await ctx.db.query("operators").withIndex("by_operator_id",q=>q.eq("operatorId",choice.operatorId)).unique():null;
+      const label=founder?{operatorId:choice.operatorId,operatorNumber:operator?publicOperatorNumber(operator):null}:{};
       const response=await currentResponse(ctx,choice);
-      if(response?.status!=="Interested")continue;
+      if(response?.status!=="Interested"){
+        if(founder)introductions.push({...label,requestId:choice._id,requestedAt:"requestedAt" in row?row.requestedAt:choice.updatedAt,status:response?.status==="Not relevant"?"Declined" as const:"Requested" as const,seen:true as const});
+        continue;
+      }
       let intro=await ctx.db.query("introductions").withIndex("by_request_identity",q=>q.eq("requestId",choice._id).eq("requestedAt",response.requestedAt)).unique();
       if(!intro){
         const id=await ctx.db.insert("introductions",{requestId:choice._id,searchId:response.searchId,requestedAt:response.requestedAt,founderId:choice.founderId,operatorId:choice.operatorId,status:"queued"});
@@ -51,18 +62,20 @@ export const list=internalMutation({
         intro=await ctx.db.get(id);
       }
       if(!intro||intro.searchId!==response.searchId)continue;
+      let paymentInfo:{paymentLabel?:string}={};
       if(founder){
         const access=await accessFor(ctx,founder._id,choice.operatorId);
+        paymentInfo={paymentLabel:paymentLabel(access)};
         if(intro.founderSeenAt!==undefined&&!access.grandfathered)await ctx.db.patch(access._id,{grandfathered:true});
         const previouslyRevealed=intro.founderSeenAt!==undefined||access.grandfathered;
-        if(!access.free&&!access.paidAt&&!previouslyRevealed){const settings=await ctx.db.query("revealSettings").withIndex("by_key",q=>q.eq("key","payment")).unique();introductions.push({requestId:choice._id,requestedAt:response.requestedAt,locked:true as const,seen:false as const,qrUrl:settings?await ctx.storage.getUrl(settings.qrStorageId):null});continue;}
+        if(!access.free&&!access.paidAt&&!previouslyRevealed){const settings=await ctx.db.query("revealSettings").withIndex("by_key",q=>q.eq("key","payment")).unique();introductions.push({...label,...paymentInfo,requestId:choice._id,requestedAt:response.requestedAt,locked:true as const,seen:false as const,qrUrl:settings?await ctx.storage.getUrl(settings.qrStorageId):null});continue;}
       }
-      if(intro.status!=="ready"||!intro.welcome){pending=true;continue;}
+      if(intro.status!=="ready"||!intro.welcome){if(intro.status==="failed")failed=true;else pending=true;if(founder)introductions.push({...label,...paymentInfo,requestId:choice._id,requestedAt:response.requestedAt,status:"Accepted" as const,seen:true as const});continue;}
       const person=founder?await ctx.db.query("operators").withIndex("by_operator_id",q=>q.eq("operatorId",choice.operatorId)).unique():await ctx.db.get(choice.founderId);
       if(!person)continue;
-      introductions.push({requestId:choice._id,requestedAt:response.requestedAt,welcome:intro.welcome,name:person.name,whatsappNumber:person.whatsappNumber,senderName:sender.name,...(known(sender.company)?{senderCompany:sender.company}:{}),...(known(person.company)?{company:person.company}:{}),...(known(person.location)?{location:person.location}:{}),seen:(founder?intro.founderSeenAt:intro.operatorSeenAt)!==undefined});
+      introductions.push({...label,...paymentInfo,requestId:choice._id,requestedAt:response.requestedAt,welcome:intro.welcome,name:person.name,whatsappNumber:person.whatsappNumber,senderName:sender.name,...(known(sender.company)?{senderCompany:sender.company}:{}),...(known(person.company)?{company:person.company}:{}),...(known(person.location)?{location:person.location}:{}),seen:(founder?intro.founderSeenAt:intro.operatorSeenAt)!==undefined});
     }
-    return {introductions,pending,isDone:page.isDone,continueCursor:page.continueCursor};
+    return {introductions,pending,failed,isDone:page.isDone,continueCursor:page.continueCursor};
   },
 });
 

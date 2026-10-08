@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict'),{load,store}=require('./convex-test-store.cjs');
+(async()=>{
+ const tables={founders:[{_id:'f1',founderId:'1',name:'Fictional Founder',linkHash:'fictional-one',searchCount:2},{_id:'f2',founderId:'2',name:'Other Fictional Founder',linkHash:'fictional-two',searchCount:1}],operators:[{_id:'o1',operatorId:'1',name:'Fictional Operator'},{_id:'o10',operatorId:'10',name:'Other Fictional Operator'},{_id:'signup',operatorId:'joined-fictional',name:'Fictional Signup'}],founderSearches:[],operatorRequests:[],introductions:[],founderChoices:[],aiCalls:[...Array.from({length:4},(_,i)=>({_id:'call-'+i,founderId:'f1',purpose:'founder_matching'})),{_id:'keep',founderId:'f2',purpose:'founder_matching'}]};
+ const {ctx}=store(tables);ctx.db.delete=async id=>{for(const rows of Object.values(tables)){const i=rows.findIndex(row=>row._id===id);if(i>=0){rows.splice(i,1);return;}}};
+ const args={founderLinks:tables.founders.map(f=>({founderId:f.founderId,linkHash:f.linkHash})),deleteAiCallIds:['call-0','call-1','call-2','call-3']},before=JSON.stringify(tables);
+ const action=url=>load('convex/productionRelease.ts',{process:{env:{CONVEX_CLOUD_URL:url}}}).finalize;
+ await assert.rejects(action('https://neat-hyena-46.convex.cloud').handler(ctx,args),/target mismatch/);assert.equal(JSON.stringify(tables),before);
+ await assert.rejects(action('https://first-guanaco-957.convex.cloud').handler(ctx,{...args,deleteAiCallIds:['call-0','call-1','call-2','keep']}),/outside/);assert.equal(JSON.stringify(tables),before);
+ tables.operatorRequests.push({_id:'new',founderId:'f1'});await assert.rejects(action('https://first-guanaco-957.convex.cloud').handler(ctx,args),/New activity/);tables.operatorRequests.pop();assert.equal(JSON.stringify(tables),before);
+ const result=await action('https://first-guanaco-957.convex.cloud').handler(ctx,args);assert.equal(result.deletedAiCalls,4);assert.equal(result.resetFounders,2);assert.equal(result.assignedNumbers,1);assert.equal(tables.aiCalls[0]._id,'keep');assert.equal(tables.aiCalls.length,1);assert.equal(tables.operators[2].operatorNumber,11);assert.equal(tables.operators[0].operatorNumber,undefined);assert.equal(tables.operators[1].operatorNumber,undefined);
+ for(const f of tables.founders){assert.equal(f.searchCount,0);assert(args.founderLinks.some(link=>link.linkHash===f.linkHash));}
+ console.log('PASS: production-only guard, exact approved usage deletion, new-activity rejection, other activity/profiles/links and existing numbers preserved, three searches per founder.');
+})().catch(e=>{console.error(e);process.exitCode=1;});

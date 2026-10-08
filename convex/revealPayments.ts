@@ -3,6 +3,14 @@ import {v} from "convex/values";
 import type {MutationCtx} from "./_generated/server";
 import type {Id} from "./_generated/dataModel";
 import {currentResponse} from "./lib/meetingResponses";
+import {paymentLabel} from "./lib/paymentLabel";
+export const label=internalQuery({args:{linkHash:v.string(),requestId:v.id("founderChoices"),requestedAt:v.number()},returns:v.union(v.null(),v.object({paymentLabel:v.string()})),handler:async(ctx,args)=>{
+ if((await ctx.db.query("adminLinks").withIndex("by_link_hash",q=>q.eq("linkHash",args.linkHash)).unique())?.owner!=="Prabhat")return null;
+ const choice=await ctx.db.get(args.requestId),response=choice?await currentResponse(ctx,choice):null;if(!choice||response?.status!=="Interested"||response.requestedAt!==args.requestedAt)return null;
+ const access=await ctx.db.query("founderOperatorAccess").withIndex("by_founder_operator",q=>q.eq("founderId",choice.founderId).eq("operatorId",choice.operatorId)).unique();
+ const allowance=await ctx.db.query("founderRevealAllowances").withIndex("by_founder",q=>q.eq("founderId",choice.founderId)).unique();
+ return {paymentLabel:paymentLabel(access,!access&&(!allowance||allowance.firstOperatorId===choice.operatorId))};
+}});
 export async function accessFor(ctx:MutationCtx,founderId:Id<"founders">,operatorId:string){
  const existing=await ctx.db.query("founderOperatorAccess").withIndex("by_founder_operator",q=>q.eq("founderId",founderId).eq("operatorId",operatorId)).unique();if(existing)return existing;
  let allowance=await ctx.db.query("founderRevealAllowances").withIndex("by_founder",q=>q.eq("founderId",founderId)).unique();

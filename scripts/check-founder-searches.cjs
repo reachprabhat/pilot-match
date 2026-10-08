@@ -6,9 +6,9 @@ const base='https://neat-hyena-46.convex.site';
   const tab=await(await fetch('http://127.0.0.1:9222/json/new?about:blank',{method:'PUT'})).json();
   const ws=new WebSocket(tab.webSocketDebuggerUrl);
   await new Promise(resolve=>ws.addEventListener('open',resolve,{once:true}));
-  let id=0,count=0,failNext=false,searchRequests=0;
+  let id=0,count=0,failNext=false,searchRequests=0,weakNext=false,lastMatches;
   const pending=new Map(),errors=[],requestIds=[];
-  const matches=[{operatorId:'example-one',score:93,why:'Manufacturing leadership fits the bottleneck pilot.'},{operatorId:'example-two',score:85,why:'Retail operations experience supports a pilot.'}];
+  const matches=[{operatorId:'example-one',operatorNumber:1,score:93,why:'Manufacturing leadership fits the bottleneck pilot.'},{operatorId:'example-two',operatorNumber:2,score:85,why:'Retail operations experience supports a pilot.'}];
   const send=(method,params={})=>new Promise((resolve,reject)=>{pending.set(++id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
   ws.addEventListener('message',({data})=>{
     const message=JSON.parse(data);
@@ -20,13 +20,13 @@ const base='https://neat-hyena-46.convex.site';
         let body,status=200;
         if(new URL(event.request.url).pathname==='/api/introductions'){await send('Fetch.fulfillRequest',{requestId:event.requestId,responseCode:200,responseHeaders:[{name:'Content-Type',value:'application/json'}],body:Buffer.from(JSON.stringify({introductions:[],pending:false,isDone:true,continueCursor:''})).toString('base64')}).catch(error=>{if(error.message!=='Invalid InterceptionId.')throw error;});return;}
         if(new URL(event.request.url).pathname==='/api/founder')body={company:'Fictional Example Company',searchCount:count,searchLimit:3,searchesRemaining:3-count};
-        else if(new URL(event.request.url).pathname==='/api/matches')body={ask:count?'A fictional saved ask':'',matches:count?matches.map(match=>({...match,choice:null})):[]};
+        else if(new URL(event.request.url).pathname==='/api/matches')body={ask:count?'A fictional saved ask':'',matches:count?(lastMatches||matches).map(match=>({...match,choice:null})):[]};
         else if(new URL(event.request.url).pathname==='/api/search'){
           searchRequests++;
           const request=JSON.parse(event.request.postData);requestIds.push(request.requestId);
           if(failNext){failNext=false;status=503;body={error:'Busy right now. Try again in a few minutes.'};}
           else if(count>=3){status=429;body={status:'limit_reached',searchCount:3,searchLimit:3,searchesRemaining:0};}
-          else{count++;body={status:'matched',matches,searchCount:count,searchLimit:3,searchesRemaining:3-count};}
+          else{count++;lastMatches=weakNext?matches.map(m=>({...m,score:79})):matches;body={status:'matched',matches:lastMatches,searchCount:count,searchLimit:3,searchesRemaining:3-count};}
         }else throw Error('Unexpected API request');
         await send('Fetch.fulfillRequest',{requestId:event.requestId,responseCode:status,responseHeaders:[{name:'Content-Type',value:'application/json'},{name:'Cache-Control',value:'no-store'}],body:Buffer.from(JSON.stringify(body)).toString('base64')});
       })().catch(error=>errors.push(error.message));
@@ -38,7 +38,7 @@ const base='https://neat-hyena-46.convex.site';
   await send('Page.enable');await send('Network.enable');await send('Runtime.enable');
   await send('Fetch.enable',{patterns:[{urlPattern:base+'/api/*',requestStage:'Request'}]});
   for(const [name,width,height]of[['desktop',1280,800],['phone',390,844],['small-phone',320,740]]){
-    count=0;
+    count=0;weakNext=false;lastMatches=matches;
     await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});
     await send('Page.navigate',{url:'about:blank'});await wait('location.href==="about:blank"');
     await send('Page.navigate',{url:base+'/#f='+'a'.repeat(43)});await wait('document.getElementById("ask")&&!document.getElementById("ask").hidden');
@@ -53,9 +53,10 @@ const base='https://neat-hyena-46.convex.site';
     const personalFragment=await evaluate('location.hash');
     const requestsBeforeLanding=searchRequests;
     await evaluate('document.getElementById("back").click()');
-    assert.equal(await evaluate('landing.hidden'),false);
+    assert.equal(await evaluate('landing.hidden'),true);
+    assert.equal(await evaluate('founderScreen'),'home');
     assert.equal(await evaluate('location.hash'),personalFragment,'Back preserves the personal link');
-    await evaluate('openAsk.click()');
+    await evaluate('navigateFounderScreen("home")');
     assert.equal(await evaluate('ask.hidden'),false);
     assert.equal(await evaluate('pilotAsk.value'),'A fictional manufacturing pilot','round trip preserves the ask');
     assert.equal(await evaluate('searchButton.disabled'),false,'Search stays enabled after the landing round trip');
@@ -64,23 +65,23 @@ const base='https://neat-hyena-46.convex.site';
       failNext=true;await evaluate('searchButton.click()');await wait('!submitting && searchMessage.textContent==="Busy right now. Try again in a few minutes."');
       assert.equal(count,0);assert.equal(await evaluate('matchesSection.hidden'),true);assert.equal(await evaluate('pilotAsk.value'),'A fictional manufacturing pilot');
       const failedId=requestIds.at(-1);await evaluate('searchButton.click()');await wait('!submitting && remaining===2');assert.notEqual(requestIds.at(-1),failedId,'explicit retry after a known failure gets a new request ID');
-      await evaluate('document.getElementById("back-to-ask").click()');await wait('!ask.hidden && matchesSection.hidden');
+      await evaluate('document.getElementById("back-to-ask").click()');await wait('!ask.hidden && founderScreen==="home"');
       count=0;await evaluate('window.dispatchEvent(new Event("focus"))');await wait('remaining===3');
     }
     for(let n=1;n<=3;n++){
-      if(n>1){await evaluate('document.getElementById("back-to-ask").click()');await wait('!ask.hidden && matchesSection.hidden');}
+      if(n>1){await evaluate('document.getElementById("back-to-ask").click()');await wait('!ask.hidden && founderScreen==="home"');}
       await type('Fictional pilot '+n);const before=searchRequests;await evaluate('searchButton.click();searchButton.click()');
       await wait(`!submitting && remaining===${3-n} && !matchesSection.hidden`);
       assert.equal(searchRequests,before+1,'double click sends one request');
       assert.equal(await evaluate('matchCards.querySelectorAll("article").length'),2);
-      assert.equal(await evaluate('matchCards.querySelector("h2").textContent'),'Operator example-one');
+      assert.equal(await evaluate('matchCards.querySelector("h2").textContent'),'Operator 1');
       assert.equal(await evaluate('matchCards.querySelector(".fit-score").textContent'),'93/100');
       assert.equal(await evaluate('ask.hidden'),true,'results are a separate screen');
       assert.equal(await evaluate('document.activeElement.id'),'matches-title','Results heading retains focus');
       assert.equal(await evaluate('getComputedStyle(document.activeElement).outlineStyle'),'none','focused Results heading has no box');
     }
     assert.equal(await evaluate('searchButton.disabled'),true);
-    assert.equal(await evaluate('matchingNote.textContent'),'You’ve used all 3 searches.');
+    assert.equal(await evaluate('matchingNote.textContent'),'0 searches left today. Maximum 300 words.');
     const rectangles=await evaluate('Array.from(matchCards.children,card=>({top:card.getBoundingClientRect().top,left:card.getBoundingClientRect().left}))');
     if(name==='desktop')assert.equal(rectangles[0].top,rectangles[1].top);else assert.ok(rectangles[1].top>rectangles[0].top);
     assert.equal(await evaluate('document.documentElement.scrollWidth>innerWidth'),false);
@@ -89,12 +90,25 @@ const base='https://neat-hyena-46.convex.site';
     await send('Page.reload',{ignoreCache:true});await wait(`performance.timeOrigin!==${previousOrigin} && typeof remaining!=='undefined' && remaining===0 && !matchesSection.hidden`);
     await wait('!matchesSection.hidden && matchCards.children.length===2');
     assert.equal(await evaluate('searchButton.disabled'),true);assert.equal(await evaluate('matchesSection.hidden'),false);
+    assert.equal(await evaluate('founderScreen'),'home','reopening the personal link starts at home');
+    assert.equal(await evaluate('Array.from(matchCards.querySelectorAll("article")).filter(card=>!card.hidden).length'),2,'home shows at most two saved recommendations');
+    assert.deepEqual(await evaluate('Array.from(document.querySelectorAll("main > section:not([hidden]) > h1"),heading=>heading.textContent)'),['Your operators','Your best-fit operators','Search for new operators']);
     const requestsBeforeBack=searchRequests;
-    await evaluate('document.getElementById("back-to-ask").click()');await wait('!ask.hidden && matchesSection.hidden');
+    await evaluate('document.getElementById("back-to-ask").click()');await wait('!ask.hidden && founderScreen==="home"');
     assert.equal(searchRequests,requestsBeforeBack,'back does not search');assert.equal(count,3);
     count=0;await evaluate('window.dispatchEvent(new Event("focus"))');await wait('remaining===3');await type('A fictional ask after reset');assert.equal(await evaluate('searchButton.disabled'),false);
-    await evaluate('document.getElementById("back").click()');assert.equal(await evaluate('matchesSection.hidden'),true);
+    await evaluate('document.getElementById("back").click()');assert.equal(await evaluate('founderScreen'),'home');
+    if(name==='phone'){
+      const proof='C:/Users/reach/OneDrive/Documents/build-sprint-data/strong-match-proof';
+      await type('Fictional strong-match pilot');await evaluate('searchButton.click()');await wait('!submitting&&remaining===2&&founderScreen==="results"');assert.equal(await evaluate('matchCards.querySelectorAll("article").length'),2);
+      let metrics=await send('Page.getLayoutMetrics');let shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip:{x:0,y:0,width:390,height:Math.ceil(metrics.cssContentSize.height),scale:1}});fs.writeFileSync(path.join(proof,'search-with-matches-390.png'),Buffer.from(shot.data,'base64'));
+      await evaluate('navigateFounderScreen("home")');weakNext=true;await type('Fictional pilot with no strong match');await evaluate('searchButton.click()');await wait('!submitting&&remaining===1&&founderScreen==="results"');
+      assert.equal(await evaluate('matchCards.querySelectorAll("article").length'),0);assert.equal(await evaluate('matchCards.textContent'),"No strong match yet. Besto's AI will notify you when a better-fit operator joins.");assert.equal(await evaluate('document.getElementById("results-search-count").textContent'),'1 searches left today');
+      metrics=await send('Page.getLayoutMetrics');shot=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip:{x:0,y:0,width:390,height:Math.ceil(metrics.cssContentSize.height),scale:1}});fs.writeFileSync(path.join(proof,'search-with-none-390.png'),Buffer.from(shot.data,'base64'));
+      const origin=await evaluate('performance.timeOrigin');await send('Page.reload',{ignoreCache:true});await wait('performance.timeOrigin!=='+origin+'&&typeof remaining!=="undefined"&&remaining===1&&founderScreen==="home"');assert.equal(await evaluate('matchCards.querySelectorAll("article").length'),0);assert.equal(count,2);weakNext=false;
+      console.log('PASS: all-79 search shows exact empty message, costs one, persists after reload; 390px matches/none screenshots use fictional replies.');
+    }
     console.log(name+': two anonymous cards, correct layout, error recovery, no double clicks, cap/reload/reset and no overflow passed.');
   }
   await send('Fetch.disable');assert.deepEqual(errors,[]);ws.close();await fetch('http://127.0.0.1:9222/json/close/'+tab.id);console.log('Browser contract checks passed using fictional replies; no paid AI calls.');
-})().catch(error=>{console.error(error);process.exitCode=1;});
+})().catch(error=>{console.error(error);process.exit(1);});

@@ -23,19 +23,44 @@ const resultsMessage = document.getElementById('results-message');
 let searchVersion = 0;
 let matchRefreshTimer;
 let dailyRefreshTimer;
+let founderScreen;
+let bothMatchesRequested = false;
+let requestedOperatorIds = new Set();
+window.addEventListener('besto:requested-operators', event => {
+  requestedOperatorIds = new Set(event.detail);
+  if (personalCode) renderFounderScreen(false);
+});
+const confirmedOperators = document.getElementById('confirmed-operators');
+// Reuse the saved match cards and search form; their actions keep the same endpoints.
+ask.parentNode.append(ask);
 
 function renderFounderScreen(focus = true) {
   if (!personalCode) return;
   const results = new URL(location.href).searchParams.get('screen') === 'results';
+  const nextScreen = results ? 'results' : 'home';
+  const previousScreen = founderScreen;
+  if (founderScreen && founderScreen !== nextScreen) showSearchMessage('');
+  const screenChanged = founderScreen !== nextScreen;
+  founderScreen = nextScreen;
   landing.hidden = true;
   linkState.hidden = true;
   ask.hidden = results;
-  matchesSection.hidden = !results;
+  matchesSection.hidden = false;
+  confirmedOperators.hidden = false;
+  document.querySelector('main').classList.toggle('founder-home', !results);
+  document.getElementById('ask-title').textContent = 'Search for new operators';
+  document.getElementById('back').hidden = true;
+  document.getElementById('matches-title').textContent = 'Your best-fit operators';
+  backToAsk.hidden = !results;
+  backToAsk.textContent = 'Back to my home';
+  document.getElementById('results-search-count').hidden = !results;
+  Array.from(matchCards.querySelectorAll('article')).forEach(card => {if (requestedOperatorIds.has(card.dataset.operatorId)) card.remove();});
+  if (screenChanged && previousScreen) window.dispatchEvent(new Event('besto:founder-screen-changed'));
   const backUrl = new URL(location.href);
   backUrl.searchParams.set('screen', 'ask');
   backToAsk.href = backUrl.pathname + backUrl.search + backUrl.hash;
   if (focus) {
-    document.getElementById(results ? 'matches-title' : 'ask-title').focus();
+    document.getElementById(results ? 'matches-title' : 'confirmed-title').focus();
     window.scrollTo(0, 0);
   }
 }
@@ -63,11 +88,14 @@ function showMatches(matches, focus = true) {
     throw new Error('Invalid matches');
   matchCards.replaceChildren();
   for (const match of matches) {
+    if (match.score < 80 || requestedOperatorIds.has(match.operatorId)) continue;
     const card = document.createElement('article');
+    card.dataset.operatorId = match.operatorId;
     const title = document.createElement('h2');
     const score = document.createElement('p');
     const reason = document.createElement('p');
-    title.textContent = `Operator ${match.operatorId}`;
+    const operatorNumber = match.operatorNumber ?? (/^[1-9]\d*$/.test(match.operatorId) ? Number(match.operatorId) : null);
+    title.textContent = Number.isSafeInteger(operatorNumber) && operatorNumber > 0 ? `Operator ${operatorNumber}` : 'Operator';
     score.className = 'fit-score';
     score.textContent = `${match.score}/100`;
     score.setAttribute('aria-label', `Fit score ${match.score} out of 100`);
@@ -118,6 +146,7 @@ function showMatches(matches, focus = true) {
           savedChoice = result.status;
           savedResponse = result.response || '';
           updateChoice();
+          if (value === 'Requested') {requestedOperatorIds.add(match.operatorId); card.remove();}
           window.dispatchEvent(new Event('connection-status-changed'));
           if(value==='Requested')await restoreMatches(code,AbortSignal.timeout(15000));
         } catch (error) {
@@ -134,7 +163,7 @@ function showMatches(matches, focus = true) {
     card.append(title, score, reason, actions, status);
     matchCards.append(card);
   }
-  if(!matches.length){const empty=document.createElement('p');empty.textContent='No match found. We will notify as soon as there is a match.';matchCards.append(empty);}
+  if(!matchCards.querySelector('article')){const empty=document.createElement('p');empty.textContent=bothMatchesRequested?"You've requested both matches from this search. Search again for new operators.":"No strong match yet. Besto's AI will notify you when a better-fit operator joins.";matchCards.append(empty);}
   if (focus) navigateFounderScreen('results');
   else renderFounderScreen(false);
 }
@@ -152,6 +181,7 @@ async function restoreMatches(code, signal, restoreAsk = false) {
     pilotAsk.value = result.ask;
     updateSearchButton();
   }
+  bothMatchesRequested = result.bothMatchesRequested === true;
   if (Array.isArray(result.matches)) showMatches(result.matches, false);
   clearTimeout(matchRefreshTimer);
   if(result.refreshPending){resultsMessage.textContent='Finding your next best-fit operators...';resultsMessage.hidden=false;matchRefreshTimer=setTimeout(()=>{if(personalCode===code&&searchVersion===version)restoreMatches(code,AbortSignal.timeout(15000)).catch(()=>{});},2500);}
@@ -159,11 +189,12 @@ async function restoreMatches(code, signal, restoreAsk = false) {
 }
 
 function showSearchMessage(message, error = false) {
-  searchMessage.textContent = message;
-  searchMessage.hidden = !message;
+  const onResults = founderScreen === 'results';
+  searchMessage.textContent = onResults ? '' : message;
+  searchMessage.hidden = !message || onResults;
   searchMessage.classList.toggle('error', error);
-  resultsMessage.textContent = message;
-  resultsMessage.hidden = !message || matchesSection.hidden;
+  resultsMessage.textContent = onResults ? message : '';
+  resultsMessage.hidden = !message || !onResults;
   resultsMessage.classList.toggle('error', error);
 }
 
@@ -195,6 +226,11 @@ async function openPersonalLink() {
   submitting?.abort();
   submitting = undefined;
   personalCode = undefined;
+  bothMatchesRequested = false;
+  requestedOperatorIds = new Set();
+  founderScreen = undefined;
+  confirmedOperators.hidden = true;
+  document.querySelector('main').classList.remove('founder-home');
   showSearchMessage('');
   updateSearchButton();
   lookup?.abort();
@@ -240,17 +276,21 @@ async function openPersonalLink() {
     if (typeof founder.company !== 'string') throw new Error('Invalid reply');
     applySearchState(founder);
     personalCode = match[1];
+    // Reopening a personal link always starts at home, including old results links.
+    const homeUrl = new URL(location.href);
+    homeUrl.searchParams.delete('screen');
+    history.replaceState(null, '', homeUrl.pathname + homeUrl.search + homeUrl.hash);
     updateSearchButton();
     company.textContent = `For ${founder.company || 'your company'}`;
     company.hidden = false;
     linkState.hidden = true;
     ask.hidden = false;
-    document.getElementById('ask-title').focus();
+    renderFounderScreen(false);
     try {
       await restoreMatches(personalCode, current.signal, true);
       if (lookup === current) renderFounderScreen();
     }
-    catch { if (lookup === current) showSearchMessage('Your saved matches could not load. Reload to try again.', true); }
+    catch { if (lookup === current) {renderFounderScreen(); showSearchMessage('Your saved matches could not load. Reload to try again.', true);} }
   } catch {
     if (lookup !== current) return;
     linkTitle.textContent = 'Your link could not open';
@@ -268,6 +308,7 @@ openAsk.addEventListener('click', () => {
 });
 
 document.getElementById('back').addEventListener('click', () => {
+  if (personalCode) {navigateFounderScreen('home'); return;}
   searchVersion++;
   clearMatches();
   submitting?.abort();
@@ -285,6 +326,8 @@ document.getElementById('back').addEventListener('click', () => {
   }
   ask.hidden = true;
   landing.hidden = false;
+  founderScreen = 'home';
+  window.dispatchEvent(new Event('besto:founder-screen-changed'));
   openAsk.focus();
 });
 
@@ -332,6 +375,7 @@ searchButton.addEventListener('click', async () => {
     if (result.status !== 'matched' && result.status !== 'limit_reached') throw new Error('Invalid reply');
     showSearchMessage('');
     if (result.status === 'matched') {
+      bothMatchesRequested = false;
       showMatches(result.matches);
       try { await restoreMatches(code, controller.signal); }
       catch { showSearchMessage('Your matches are saved. Reload to see their saved choices.', true); }
@@ -339,7 +383,7 @@ searchButton.addEventListener('click', async () => {
     applySearchState(result);
     pendingRequest = undefined;
   } catch {
-    if (submitting === controller) showSearchMessage('Busy right now. Try again in a few minutes.', true);
+    if (submitting === controller && !ask.hidden) showSearchMessage('Busy right now. Try again in a few minutes.', true);
   } finally {
     clearTimeout(timeout);
     if (submitting === controller) {submitting = undefined; updateSearchButton();}

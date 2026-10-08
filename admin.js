@@ -9,7 +9,7 @@ function clear(){for(const list of Object.values(lists))list.replaceChildren();s
 function addCard(request){
   if(shown.has(request.requestId)||!lists[request.status])return;
   const article=document.createElement('article');article.dataset.requestId=request.requestId;article.dataset.founderId=request.founderId;article.dataset.operatorId=request.operatorId;
-  const title=document.createElement('h3');title.textContent=`Founder ${request.founderId} / Operator ${request.operatorId}`;article.append(title);
+  const title=document.createElement('h3');const number=request.operatorNumber??(/^[1-9]\d*$/.test(request.operatorId)?Number(request.operatorId):null);title.textContent=`Founder ${request.founderId} / ${Number.isSafeInteger(number)&&number>0?'Operator '+number:'Operator'}`;article.append(title);
   const contacts=document.createElement('dl');
   const contact=(label,value)=>{const term=document.createElement('dt'),detail=document.createElement('dd');term.textContent=label;detail.textContent=value||'Not provided';contacts.append(term,detail);};
   if(request.status==='Declined'){
@@ -22,8 +22,8 @@ function addCard(request){
   if(request.status==='Accepted'){contact('Founder',request.founderName);contact('Founder WhatsApp',request.founderPhone);}
   article.append(contacts);
   if(request.status==='Accepted'){
-    const payment=document.createElement('p');payment.className='payment-status';payment.textContent=request.paymentStatus??'Free';article.append(payment);
-    if(request.paymentStatus==='Locked'){const button=document.createElement('button');button.type='button';button.className='primary';button.textContent='Mark paid';article.append(button);button.addEventListener('click',async()=>{const current=version;button.disabled=true;try{const response=await fetch('/api/admin/mark-paid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,requestId:request.requestId,requestedAt:request.requestedAt}),cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(15000)});if(current!==version)return;if(!response.ok)throw Error();payment.textContent='Paid';button.remove();}catch{if(current===version){payment.textContent='Could not mark paid. Try again.';button.disabled=false;}}});}
+    const payment=document.createElement('p');payment.className='payment-status';payment.textContent=request.paymentLabel??(request.paymentStatus==='Free'?'Free (first connect)':'Payment pending');article.append(payment);
+    if(request.paymentStatus==='Locked'){const button=document.createElement('button');button.type='button';button.className='primary';button.textContent='Mark paid';article.append(button);button.addEventListener('click',async()=>{const current=version;button.disabled=true;try{const response=await fetch('/api/admin/mark-paid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,requestId:request.requestId,requestedAt:request.requestedAt}),cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(15000)});if(current!==version)return;if(!response.ok)throw Error();const result=await response.json();if(current!==version)return;if(typeof result.paymentLabel!=='string')throw Error();payment.textContent=result.paymentLabel;button.remove();}catch{if(current===version){payment.textContent='Could not mark paid. Try again.';button.disabled=false;}}});}
   }
   const detail=(label,value)=>{const section=document.createElement('section'),h=document.createElement('h3'),p=document.createElement('p');h.textContent=label;p.textContent=value;section.append(h,p);article.append(section);};
   detail('Pilot ask',request.ask);

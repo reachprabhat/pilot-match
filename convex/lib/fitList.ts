@@ -14,8 +14,13 @@ export async function eligibleMatches(ctx:QueryCtx,founderId:Id<"founders">,matc
   for(const match of matches)if(!excluded.has(match.operatorId)&&await ctx.db.query("operators").withIndex("by_operator_id",q=>q.eq("operatorId",match.operatorId)).unique())eligible.push(match);
   return eligible.sort((a,b)=>b.score-a.score||a.operatorId.localeCompare(b.operatorId));
 }
+// Keep the saved scoring pool intact; the cutoff controls visible/requestable results.
+export function originalTopMatches(matches:Match[]){
+  return [...matches].sort((a,b)=>b.score-a.score||a.operatorId.localeCompare(b.operatorId)).slice(0,2).filter(match=>match.score>=80);
+}
+export async function strongMatches(ctx:QueryCtx,founderId:Id<"founders">,matches:Match[]){
+  return eligibleMatches(ctx,founderId,originalTopMatches(matches));
+}
 export async function selectedSearch(ctx:QueryCtx,founder:Doc<"founders">){
-  const selected=founder.activeSearchId?await ctx.db.get(founder.activeSearchId):null;
-  if(selected?.founderId===founder._id&&selected.status==="completed")return selected;
   return ctx.db.query("founderSearches").withIndex("by_founder_status",q=>q.eq("founderId",founder._id).eq("status","completed")).order("desc").first();
 }

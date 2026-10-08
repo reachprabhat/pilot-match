@@ -23,11 +23,12 @@ function load(file,extra={}) {
   const action=load('convex/matching.ts',{fetch:async()=>{calls++;return {ok:true,json:async()=>({status:'completed',id:'fictional-response',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(good)}]}]})};}}).run;
   const args={linkHash:'a'.repeat(64),ask:'Fictional pilot',requestId:'fictional-request'};
   assert.equal((await action.handler(ctx,args)).status,'matched');assert.equal(calls,1);assert.equal(finished,1);assert.equal(failed,0);
-  for(const response of [{ok:false},{ok:true,json:async()=>({status:'incomplete',output:[]})},{ok:true,json:async()=>({status:'completed',output:[{type:'message',content:[{type:'output_text',text:'{}'}]}]})}]) {
+  for(const response of [{ok:false,status:503,text:async()=>'{"error":"Fictional provider unavailable"}'},{ok:true,json:async()=>({status:'incomplete',output:[]})},{ok:true,json:async()=>({status:'completed',output:[{type:'message',content:[{type:'output_text',text:'{}'}]}]})}]) {
     const before=finished;calls=0;
     const run=load('convex/matching.ts',{fetch:async()=>{calls++;return response;}}).run;
     assert.equal((await run.handler(ctx,args)).status,'busy');assert.equal(calls,1);assert.equal(finished,before);
   }
+  const logs=[];const logged=load('convex/matching.ts',{console:{info:()=>{},warn:(...args)=>logs.push(args)},fetch:async()=>({ok:false,status:429,text:async()=>JSON.stringify({error:'Fictional failure: fictional-test-key +91 (99955) 50101'})})}).run;assert.equal((await logged.handler(ctx,args)).status,'busy');assert.equal(logs.length,1);const message=logs[0][1].errorMessage;assert(message.includes('HTTP 429'));assert(message.includes('Fictional failure'));assert(!message.includes('fictional-test-key'));assert(!message.includes('99955'));assert.equal(logs[0][1].stage,'provider');
   calls=0;
   assert.equal((await action.handler({...ctx,runMutation:async()=>({status:'matched',matches:privacy.validateMatches(good,input),searchCount:1,searchLimit:3,searchesRemaining:2})},args)).status,'matched');assert.equal(calls,0);
   console.log('Matching checks passed: private request, one call, no tools/retries, known distinct IDs, valid scores, failed/incomplete replies cost zero, cached results make no new call.');

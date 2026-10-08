@@ -5,6 +5,7 @@ import * as applications from "./operatorApplicationHttp";
 import {http as notify} from "./adminNotifications";
 import {decryptCode} from "./lib/operatorLinkSecrets";
 import {http as paymentAdmin} from "./revealPaymentHttp";
+import {safeWelcomeError as safeAiError} from "./lib/safeWelcomeError";
 
 const http=httpRouter();
 for(const path of ["/admin/payment-settings","/admin/payment-upload","/admin/payment-save","/admin/mark-paid","/admin/founder-matches"])http.route({path,method:"POST",handler:paymentAdmin});
@@ -120,8 +121,9 @@ for(const path of ["/matches","/choice"]){
       const bytes=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(body.code));
       const linkHash=Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,"0")).join("");
       if(path==="/matches"){
-        const result=await ctx.runQuery(internal.choices.latest,{linkHash});
-        if(result?.ask&&result.matches.length<2&&await ctx.runMutation(internal.matchingRefreshStore.queueForFounder,{linkHash}))return reply({...result,refreshPending:true},200);
+        const saved=await ctx.runQuery(internal.choices.latest,{linkHash});
+        const labels=saved?await ctx.runQuery(internal.operatorNumbers.labels,{operatorIds:saved.matches.map(match=>match.operatorId)}):[];
+        const result=saved?{...saved,matches:saved.matches.map((match,index)=>({...match,operatorNumber:labels[index]}))}:null;
         return result?reply(result,200):reply({error:"Invalid link."},404);
       }
       if(typeof body.operatorId!=="string"||body.operatorId.length>100||!["Requested","Parked","Rejected"].includes(body.status))return reply({error:"Invalid choice."},400);
@@ -149,6 +151,10 @@ http.route({path:"/search",method:"POST",handler:httpAction(async(ctx,request)=>
     if(result.status==="invalid_link")return reply({error:"Invalid link."},404);
     if(result.status==="invalid_ask")return reply({error:"Enter your pilot ask in 300 words or fewer."},400);
     if(result.status==="busy")return reply({error:"Busy right now. Try again in a few minutes."},503);
+    if(result.status==="matched"){
+      const labels=await ctx.runQuery(internal.operatorNumbers.labels,{operatorIds:result.matches.map(match=>match.operatorId)});
+      return reply({...result,matches:result.matches.map((match,index)=>({...match,operatorNumber:labels[index]}))},200);
+    }
     return reply(result,result.status==="limit_reached"?429:200);
-  }catch{return reply({error:"Busy right now. Try again in a few minutes."},503);}
+  }catch(error){console.warn("Founder search request failed",{errorMessage:safeAiError(error,process.env.OPENAI_API_KEY)});return reply({error:"Busy right now. Try again in a few minutes."},503);}
 })});
