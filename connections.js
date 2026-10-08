@@ -55,7 +55,7 @@
     if(row.locked){
       const heading=document.createElement(fullScreen?'h1':'h2');heading.textContent='Accepted. Pay to see who it is.';
       if(fullScreen){heading.id='connection-title';heading.tabIndex=-1;}
-      const note=document.createElement('p');note.textContent='Your first connection is free. Pay using the UPI QR below. Your introduction unlocks after payment is confirmed.';article.append(heading,note);
+      const note=document.createElement('p');note.textContent="Pay ₹499 to see this operator's details. Scan the QR with any UPI app. Your operator unlocks once payment is confirmed.";article.append(heading,note);
       if(row.qrUrl){const qr=document.createElement('img');qr.src=row.qrUrl;qr.alt='UPI payment QR code';qr.className='payment-qr';article.append(qr);}
       else{const missing=document.createElement('p');missing.textContent='The payment QR is not available yet. Please check back shortly.';article.append(missing);}
       const waiting=document.createElement('p');waiting.textContent='Waiting for payment confirmation.';waiting.setAttribute('role','status');article.append(waiting);return article;
