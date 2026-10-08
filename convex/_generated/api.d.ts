@@ -27,6 +27,7 @@ import type * as introductions from "../introductions.js";
 import type * as lib_enrichment from "../lib/enrichment.js";
 import type * as lib_evidenceSource from "../lib/evidenceSource.js";
 import type * as lib_fitList from "../lib/fitList.js";
+import type * as lib_introductionLanguage from "../lib/introductionLanguage.js";
 import type * as lib_manualIntroduction from "../lib/manualIntroduction.js";
 import type * as lib_matching from "../lib/matching.js";
 import type * as lib_meetingResponses from "../lib/meetingResponses.js";
@@ -91,6 +92,7 @@ declare const fullApi: ApiFromModules<{
   "lib/enrichment": typeof lib_enrichment;
   "lib/evidenceSource": typeof lib_evidenceSource;
   "lib/fitList": typeof lib_fitList;
+  "lib/introductionLanguage": typeof lib_introductionLanguage;
   "lib/manualIntroduction": typeof lib_manualIntroduction;
   "lib/matching": typeof lib_matching;
   "lib/meetingResponses": typeof lib_meetingResponses;

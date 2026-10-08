@@ -9,4 +9,8 @@ const parts={...templateParts(f,'pilot','experience'),paragraphs:["I'd like to i
 assert.throws(()=>compose(f,o,'founder',{...parts,paragraphs:['the operator is useful','phone']}));
 assert.throws(()=>compose(f,o,'founder',{...parts,paragraphs:['x '.repeat(90),'phone']}));
 assert(!validateProse("Hi Aruna,\nI’m Nikhil and my experience is why Besto matched me.\n\nReach me at 9995550102.\n\nTeam Besto",'founder'));
+for(const kind of ['founder','operator','outreach'])for(const phrase of ['revenue threshold','qualifying','fit score','80+','top-2','top two','eligibility criteria','revenue-threshold','fit-score','Top 2']){
+ const end=kind==='outreach'?'Would you be up for a 20-minute call this week?':'Team Besto';assert(!validateProse(`Hi Aruna,\nYour ${phrase} was considered.\n\nPlease connect.\n\n${end}`,kind),phrase+' must never appear');
+}
+for(const kind of ['founder','operator','outreach']){const p=templateParts({...f,topFeatures:'energy monitoring dashboards. Fit score 90.'},'a six-week pilot with qualifying manufacturers; revenue threshold met','top-2');const text=compose(f,o,kind,p);assert(validateProse(text,kind));assert(!/qualifying|revenue threshold|fit score|80\+|top-2/i.test(text));}
 console.log('PASS: natural first-name prose, three paragraphs, under 90 words, no labels, admin sign-offs and founder easy ask.');
