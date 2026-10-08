@@ -7,6 +7,7 @@ import {operatorResponseValidator} from "./responseValidators";
 import {applicationFields} from "./operatorApplicationValidators";
 
 export default defineSchema({
+  adminIntroductions:defineTable({requestId:v.id("founderChoices"),requestedAt:v.number(),founderOpenedAt:v.optional(v.number()),operatorOpenedAt:v.optional(v.number())}).index("by_request_identity",["requestId","requestedAt"]),
   founderLinkSecrets:defineTable({founderId:v.id("founders"),encryptedCode:v.string()}).index("by_founder",["founderId"]),
   operatorMatchJobs:defineTable({operatorId:v.string(),status:v.union(v.literal("queued"),v.literal("running"),v.literal("ready"),v.literal("failed")),callId:v.optional(v.id("aiCalls")),providerCallCount:v.optional(v.number()),founderCount:v.optional(v.number()),responseId:v.optional(v.string())}).index("by_operator",["operatorId"]),
   founderMatchNotifications:defineTable({founderId:v.id("founders"),operatorId:v.string(),searchId:v.id("founderSearches"),score:v.number(),createdAt:v.number()}).index("by_operator",["operatorId"]).index("by_founder_operator",["founderId","operatorId"]),

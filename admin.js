@@ -11,19 +11,43 @@ function addCard(request){
   const article=document.createElement('article');article.dataset.requestId=request.requestId;article.dataset.founderId=request.founderId;article.dataset.operatorId=request.operatorId;
   const title=document.createElement('h3');const number=request.operatorNumber??(/^[1-9]\d*$/.test(request.operatorId)?Number(request.operatorId):null);title.textContent=`Founder ${request.founderId} / ${Number.isSafeInteger(number)&&number>0?'Operator '+number:'Operator'}`;article.append(title);
   const contacts=document.createElement('dl');
-  const contact=(label,value)=>{const term=document.createElement('dt'),detail=document.createElement('dd');term.textContent=label;detail.textContent=value||'Not provided';contacts.append(term,detail);};
+  const contact=(label,value)=>{const term=document.createElement('dt'),detail=document.createElement('dd');term.textContent=label;detail.textContent=value||'Not provided';contacts.append(term,detail);return detail;};
   if(request.status==='Declined'){
     contact('Founder',request.founderName);contact('Operator',request.operatorName);
     contact('Requested',new Date(request.requestedAt).toLocaleString());contact('Declined',new Date(request.declinedAt).toLocaleString());
     article.append(contacts);lists.Declined.append(article);shown.add(request.requestId);return;
   }
-  contact('Status',request.status);contact('Requested',new Date(request.requestedAt).toLocaleString());
+  const statusCell=contact('Status',request.introduced?'Introduced':request.status);contact('Requested',new Date(request.requestedAt).toLocaleString());
   contact('Operator',request.operatorName);contact('Operator WhatsApp',request.operatorPhone);
   if(request.status==='Accepted'){contact('Founder',request.founderName);contact('Founder WhatsApp',request.founderPhone);}
   article.append(contacts);
   if(request.status==='Accepted'){
+    const introActions=document.createElement('div');introActions.className='admin-introduction-actions';
+    const introNote=document.createElement('p');introNote.className='introduction-status';introNote.setAttribute('role','status');
+    const buttons=[];let opening=false;
+    const updateIntroduction=()=>{
+      statusCell.textContent=request.introduced?'Introduced':'Accepted';
+      introNote.textContent=request.introduced?'Introduced':request.paymentStatus==='Locked'?'Confirm payment before introducing.':request.founderOpenedAt?'Founder introduction opened. Open the operator introduction next.':request.operatorOpenedAt?'Operator introduction opened. Open the founder introduction next.':'Open both introductions, then send each message in WhatsApp.';
+      for(const button of buttons)button.disabled=request.paymentStatus==='Locked'||opening;
+    };
+    for(const [recipient,label] of [['founder','Introduce to founder'],['operator','Introduce to operator']]){
+      const button=document.createElement('button');button.type='button';button.className='primary admin-introduce';button.textContent=label;buttons.push(button);introActions.append(button);
+      button.addEventListener('click',async()=>{
+        if(opening||request.paymentStatus==='Locked')return;
+        const popup=window.open('about:blank','_blank');if(!popup){introNote.textContent='Allow pop-ups to open WhatsApp, then tap again.';return;}popup.opener=null;
+        opening=true;updateIntroduction();introNote.textContent='Opening introduction...';const current=version;
+        try{
+          const response=await fetch('/api/admin/introduce',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,requestId:request.requestId,requestedAt:request.requestedAt,recipient}),cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(15000)});
+          const result=await response.json();if(current!==version||!article.isConnected){popup.close();return;}if(!response.ok)throw Error(result.error||'Could not open the introduction. Try again.');
+          const url=new URL(result.url);if(url.origin!=='https://wa.me')throw Error('Could not open the introduction. Try again.');
+          popup.location.href=url.href;Object.assign(request,result);opening=false;updateIntroduction();
+        }catch(error){popup.close();if(current===version){opening=false;updateIntroduction();introNote.textContent=error.message||'Could not open the introduction. Try again.';}}
+        finally{opening=false;for(const button of buttons)button.disabled=request.paymentStatus==='Locked';}
+      });
+    }
+    article.append(introActions,introNote);updateIntroduction();
     const payment=document.createElement('p');payment.className='payment-status';payment.textContent=request.paymentLabel??(request.paymentStatus==='Free'?'Free (first connect)':'Payment pending');article.append(payment);
-    if(request.paymentStatus==='Locked'){const button=document.createElement('button');button.type='button';button.className='primary';button.textContent='Mark paid';article.append(button);button.addEventListener('click',async()=>{const current=version;button.disabled=true;try{const response=await fetch('/api/admin/mark-paid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,requestId:request.requestId,requestedAt:request.requestedAt}),cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(15000)});if(current!==version)return;if(!response.ok)throw Error();const result=await response.json();if(current!==version)return;if(typeof result.paymentLabel!=='string')throw Error();payment.textContent=result.paymentLabel;button.remove();}catch{if(current===version){payment.textContent='Could not mark paid. Try again.';button.disabled=false;}}});}
+    if(request.paymentStatus==='Locked'){const button=document.createElement('button');button.type='button';button.className='primary';button.textContent='Mark paid';article.append(button);button.addEventListener('click',async()=>{const current=version;button.disabled=true;try{const response=await fetch('/api/admin/mark-paid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,requestId:request.requestId,requestedAt:request.requestedAt}),cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(15000)});if(current!==version)return;if(!response.ok)throw Error();const result=await response.json();if(current!==version)return;if(typeof result.paymentLabel!=='string')throw Error();payment.textContent=result.paymentLabel;request.paymentStatus='Paid';updateIntroduction();button.remove();}catch{if(current===version){payment.textContent='Could not mark paid. Try again.';button.disabled=false;}}});}
   }
   const detail=(label,value)=>{const section=document.createElement('section'),h=document.createElement('h3'),p=document.createElement('p');h.textContent=label;p.textContent=value;section.append(h,p);article.append(section);};
   detail('Pilot ask',request.ask);

@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as adminIntroductions from "../adminIntroductions.js";
 import type * as adminLinks from "../adminLinks.js";
 import type * as adminNotifications from "../adminNotifications.js";
 import type * as adminOperatorLinks from "../adminOperatorLinks.js";
@@ -24,6 +25,7 @@ import type * as introductions from "../introductions.js";
 import type * as lib_enrichment from "../lib/enrichment.js";
 import type * as lib_evidenceSource from "../lib/evidenceSource.js";
 import type * as lib_fitList from "../lib/fitList.js";
+import type * as lib_manualIntroduction from "../lib/manualIntroduction.js";
 import type * as lib_matching from "../lib/matching.js";
 import type * as lib_meetingResponses from "../lib/meetingResponses.js";
 import type * as lib_operatorApplication from "../lib/operatorApplication.js";
@@ -68,6 +70,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  adminIntroductions: typeof adminIntroductions;
   adminLinks: typeof adminLinks;
   adminNotifications: typeof adminNotifications;
   adminOperatorLinks: typeof adminOperatorLinks;
@@ -84,6 +87,7 @@ declare const fullApi: ApiFromModules<{
   "lib/enrichment": typeof lib_enrichment;
   "lib/evidenceSource": typeof lib_evidenceSource;
   "lib/fitList": typeof lib_fitList;
+  "lib/manualIntroduction": typeof lib_manualIntroduction;
   "lib/matching": typeof lib_matching;
   "lib/meetingResponses": typeof lib_meetingResponses;
   "lib/operatorApplication": typeof lib_operatorApplication;

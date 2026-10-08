@@ -1,17 +1,7 @@
-const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-// Run the actual card renderer against minimal elements, not a copied URL builder.
-const source=fs.readFileSync('connections.js','utf8'),start=source.indexOf('  function details('),end=source.indexOf('  async function recordSeen');
-const document={createElement:tag=>({tag,dataset:{},children:[],append(...nodes){this.children.push(...nodes);}})};
-const sandbox={document};vm.createContext(sandbox);vm.runInContext(source.slice(start,end),sandbox);
-const render=(name,whatsappNumber)=>sandbox.details({requestId:'fictional',welcome:'Example welcome.',name,whatsappNumber,senderName:'Aruna Example',senderCompany:'Example Company'});
-const link=(name,number)=>render(name,number).children.find(n=>n.tag==='a');
-const expected=(number,name)=>'https://wa.me/'+number+'?text='+encodeURIComponent(`Hi ${name}, I'm Aruna Example from Example Company. We were introduced through Besto. Would love to set up a quick call.`);
-assert.equal(link('  Nikhil Example  ','(999) 555-0102').href,expected('919995550102','Nikhil'));
-assert.equal(link('Aruna Example','+91 99955 50101').href,expected('919995550101','Aruna'));
-assert.equal(link('Alex Example','+1 (999) 555-0101').href,expected('19995550101','Alex'));
-assert.equal(link('Zoë Example','+91-99955-50101').href,expected('919995550101','Zoë'));
-assert.equal(new URL(link("O'Neil Example",'+91 99955 50101').href).searchParams.get('text'),"Hi O'Neil, I'm Aruna Example from Example Company. We were introduced through Besto. Would love to set up a quick call.");
-assert.equal(link('  ','+91 99955 50101').href,expected('919995550101','there'));
-assert.equal(link('Example','not found'),undefined);
-for(const [name,number]of [['Nikhil Example','9995550102'],['Aruna Example','+91 99955 50101']]){const a=link(name,number);assert.equal(a.target,'_blank');assert.equal(a.rel,'noopener noreferrer');assert.equal(a.referrerPolicy,'no-referrer');}
-console.log('PASS: saved numbers cleaned, 10 digits prefixed with 91, existing country codes preserved, first names/Unicode encoded, exact message, new tab, and missing number behavior.');
+﻿const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),{load}=require('./convex-test-store.cjs');
+const source=fs.readFileSync('connections.js','utf8'),start=source.indexOf('  function details('),end=source.indexOf('  const clear=');
+const document={createElement:tag=>({tag,dataset:{},children:[],append(...nodes){this.children.push(...nodes);},setAttribute(){}})};
+for(const role of ['founder','operator']){const sandbox={document,role};vm.createContext(sandbox);vm.runInContext(source.slice(start,end),sandbox);const card=sandbox.details({requestId:'fictional',operatorId:'example',operatorNumber:1,name:'Secret Person',whatsappNumber:'9995550102',company:'Secret Company',welcome:'Old automatic welcome',senderName:'Secret Sender'});const text=JSON.stringify(card);assert(text.includes('Accepted. Besto will introduce you on WhatsApp shortly.'));for(const secret of ['Secret Person','9995550102','Secret Company','Secret Sender','Old automatic welcome','wa.me'])assert(!text.includes(secret));}
+const {introductionDraft}=load('convex/lib/manualIntroduction.ts'),f={name:'Aruna Example',currentRole:'Founder',company:'Example Tools',whatsappNumber:'9995550101'},o={name:'Nikhil Example',currentRole:'Operations Director',company:'Example Factory',whatsappNumber:'+91 99955 50102'};
+for(const [recipient,number]of [['founder','919995550101'],['operator','919995550102']]){const draft=introductionDraft(f,o,recipient);assert.equal(new URL(draft.url).pathname,'/'+number);assert.equal(new URL(draft.url).searchParams.get('text'),draft.message);for(const value of [f.name,o.name,f.currentRole,o.currentRole,f.company,o.company,f.whatsappNumber,o.whatsappNumber,'Prabhat from Besto'])assert(draft.message.includes(value));}
+console.log('PASS: both public renderers discard even stale contacts; both manual WhatsApp drafts contain names, roles, companies and numbers with correct recipients.');

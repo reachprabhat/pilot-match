@@ -12,7 +12,7 @@ export const list=internalQuery({
   returns:v.union(v.null(),v.object({requests:v.array(v.union(v.object({
     requestId:v.id("founderChoices"),founderId:v.string(),operatorId:v.string(),operatorNumber:v.union(v.number(),v.null()),requestedAt:v.number(),
     status:v.union(v.literal("Requested"),v.literal("Accepted")),ask:v.string(),
-    operatorName:v.string(),operatorPhone:v.string(),founderName:v.optional(v.string()),founderPhone:v.optional(v.string()),
+    operatorName:v.string(),operatorPhone:v.string(),founderName:v.optional(v.string()),founderPhone:v.optional(v.string()),founderRole:v.optional(v.string()),operatorRole:v.optional(v.string()),operatorCompany:v.optional(v.string()),introduced:v.optional(v.boolean()),founderOpenedAt:v.optional(v.number()),operatorOpenedAt:v.optional(v.number()),
     industry:v.optional(v.string()),topFeatures:v.optional(v.array(v.string())),pilotsDone:v.optional(v.string()),why:v.optional(v.string()),founderCompany:v.optional(v.string()),operatorLinkHash:v.optional(v.string()),encryptedCode:v.optional(v.string()),notifiedAt:v.optional(v.number()),paymentStatus:v.optional(v.union(v.literal("Free"),v.literal("Paid"),v.literal("Locked"))),paymentLabel:v.optional(v.string()),
   }),v.object({
     requestId:v.id("founderChoices"),founderId:v.string(),operatorId:v.string(),operatorNumber:v.union(v.number(),v.null()),requestedAt:v.number(),
@@ -48,12 +48,13 @@ export const list=internalQuery({
       const notification=await ctx.db.query("adminRequestNotifications").withIndex("by_request_identity",q=>q.eq("requestId",choice._id).eq("requestedAt",identity.requestedAt)).unique();
       const access=response?.status==="Interested"?await ctx.db.query("founderOperatorAccess").withIndex("by_founder_operator",q=>q.eq("founderId",founder._id).eq("operatorId",choice.operatorId)).unique():null;
       const allowance=await ctx.db.query("founderRevealAllowances").withIndex("by_founder",q=>q.eq("founderId",founder._id)).unique();
+      const manual=response?.status==="Interested"?await ctx.db.query("adminIntroductions").withIndex("by_request_identity",q=>q.eq("requestId",choice._id).eq("requestedAt",identity.requestedAt)).unique():null;
       const paymentStatus=access?.free||access?.grandfathered||!access&&!allowance||!access&&allowance?.firstOperatorId===choice.operatorId?"Free" as const:access?.paidAt?"Paid" as const:"Locked" as const;
       requests.push({requestId:choice._id,founderId:founder.founderId,operatorId:choice.operatorId,operatorNumber:publicOperatorNumber(operator),requestedAt:identity.requestedAt,
         status:response?.status==="Interested"?"Accepted" as const:"Requested" as const,
         ask:clean(search.ask),operatorName:operator.name,operatorPhone:operator.whatsappNumber,founderCompany:founder.company,
         ...(operatorLink?{operatorLinkHash:operatorLink.linkHash}:{}),...(secret?{encryptedCode:secret.encryptedCode}:{}),...(notification?{notifiedAt:notification.notifiedAt}:{}),
-        ...(response?.status==="Interested"?{founderName:founder.name,founderPhone:founder.whatsappNumber,paymentStatus,paymentLabel:paymentLabel(access,!access&&(!allowance||allowance.firstOperatorId===choice.operatorId))}:{}),
+        ...(response?.status==="Interested"?{founderName:founder.name,founderPhone:founder.whatsappNumber,founderRole:founder.currentRole,operatorRole:operator.currentRole,operatorCompany:operator.company,introduced:manual?.founderOpenedAt!==undefined&&manual?.operatorOpenedAt!==undefined,...(manual?.founderOpenedAt!==undefined?{founderOpenedAt:manual.founderOpenedAt}:{}),...(manual?.operatorOpenedAt!==undefined?{operatorOpenedAt:manual.operatorOpenedAt}:{}),paymentStatus,paymentLabel:paymentLabel(access,!access&&(!allowance||allowance.firstOperatorId===choice.operatorId))}:{}),
         ...(present(founder.industry)?{industry:clean(founder.industry)}:{}),
         ...(features.length?{topFeatures:features.map(clean)}:{}),
         ...(/^\d+(?:\s+pilots?(?:\s+(?:done|completed))?)?$/i.test(pilots)?{pilotsDone:pilots.match(/^\d+/)![0]}:{}),

@@ -25,7 +25,7 @@ function addCard(request){
   const actions=document.createElement('div');actions.className='operator-actions';
   let savedResponse=request.response||'',saving=false;
   const buttons=[];
-  const update=()=>{status.classList.remove('error');status.textContent=savedResponse;for(const button of buttons)button.setAttribute('aria-pressed',String(button.dataset.response===savedResponse));};
+  const update=()=>{status.classList.remove('error');status.textContent=savedResponse==='Interested'?'Accepted. Besto will introduce you on WhatsApp shortly.':savedResponse;for(const button of buttons)button.setAttribute('aria-pressed',String(button.dataset.response===savedResponse));};
   for(const value of ['Interested','Not relevant']){
     const button=document.createElement('button');button.type='button';button.textContent=value;button.dataset.response=value;button.className=value==='Interested'?'primary':'secondary';buttons.push(button);actions.append(button);
     button.addEventListener('click',async()=>{

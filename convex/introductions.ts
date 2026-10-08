@@ -1,50 +1,29 @@
-import {internalMutation} from "./_generated/server";
-import {internal} from "./_generated/api";
+﻿import {internalMutation,internalQuery} from "./_generated/server";
 import {v} from "convex/values";
 import {paginationOptsValidator} from "convex/server";
 import {currentResponse} from "./lib/meetingResponses";
 import {accessFor} from "./revealPayments";
 import {publicOperatorNumber} from "./lib/operatorNumbers";
 import {paymentLabel} from "./lib/paymentLabel";
-
 export const roleValidator=v.union(v.literal("founder"),v.literal("operator"));
-const operatorLabel={operatorId:v.optional(v.string()),operatorNumber:v.optional(v.union(v.number(),v.null())),paymentLabel:v.optional(v.string())};
-const contactValidator=v.object({...operatorLabel,requestId:v.id("founderChoices"),requestedAt:v.number(),welcome:v.string(),name:v.string(),whatsappNumber:v.string(),senderName:v.string(),senderCompany:v.optional(v.string()),company:v.optional(v.string()),location:v.optional(v.string()),seen:v.boolean()});
-const known=(value:string)=>!/^\s*(?:not found|not provided|unknown|n\/?a|none|-)?\s*$/i.test(value);
-const lockedValidator=v.object({...operatorLabel,requestId:v.id("founderChoices"),requestedAt:v.number(),locked:v.literal(true),seen:v.literal(false),qrUrl:v.union(v.string(),v.null())});
-const statusValidator=v.object({...operatorLabel,requestId:v.id("founderChoices"),requestedAt:v.number(),status:v.union(v.literal("Requested"),v.literal("Accepted"),v.literal("Declined")),seen:v.literal(true)});
-
-export const ensureAccepted=internalMutation({
-  args:{requestId:v.id("founderChoices")},returns:v.null(),
-  handler:async(ctx,args)=>{
-    const choice=await ctx.db.get(args.requestId),response=choice?await currentResponse(ctx,choice):null;
-    if(!choice||response?.status!=="Interested")return null;
-    await accessFor(ctx,choice.founderId,choice.operatorId);
-    const existing=await ctx.db.query("introductions").withIndex("by_request_identity",q=>q.eq("requestId",choice._id).eq("requestedAt",response.requestedAt)).unique();
-    if(!existing){
-      const introductionId=await ctx.db.insert("introductions",{requestId:choice._id,searchId:response.searchId,requestedAt:response.requestedAt,founderId:choice.founderId,operatorId:choice.operatorId,status:"queued"});
-      await ctx.scheduler.runAfter(0,internal.introductionWelcome.generate,{introductionId});
-    }else if(existing.status==="queued"){
-      await ctx.scheduler.runAfter(0,internal.introductionWelcome.generate,{introductionId:existing._id});
-    }
-    return null;
-  },
-});
-
-// A link is checked before any request or contact is read. Raw codes never reach storage.
-export const list=internalMutation({
+const rowValidator=v.object({requestId:v.id("founderChoices"),requestedAt:v.number(),status:v.union(v.literal("Requested"),v.literal("Accepted"),v.literal("Declined")),seen:v.literal(true),operatorId:v.optional(v.string()),operatorNumber:v.optional(v.union(v.number(),v.null())),paymentLabel:v.optional(v.string()),locked:v.optional(v.literal(true)),qrUrl:v.optional(v.union(v.string(),v.null()))});
+// Acceptance reserves the existing free-first/payment allowance. No contacts or AI welcome are generated.
+export const ensureAccepted=internalMutation({args:{requestId:v.id("founderChoices")},returns:v.null(),handler:async(ctx,args)=>{
+  const choice=await ctx.db.get(args.requestId),response=choice?await currentResponse(ctx,choice):null;
+  if(choice&&response?.status==="Interested")await accessFor(ctx,choice.founderId,choice.operatorId);
+  return null;
+}});
+// Public personal-link replies contain statuses only, including old ready/paid introductions.
+export const list=internalQuery({
   args:{linkHash:v.string(),role:roleValidator,paginationOpts:paginationOptsValidator},
-  returns:v.union(v.null(),v.object({introductions:v.array(v.union(contactValidator,lockedValidator,statusValidator)),pending:v.boolean(),failed:v.boolean(),isDone:v.boolean(),continueCursor:v.string()})),
+  returns:v.union(v.null(),v.object({introductions:v.array(rowValidator),pending:v.boolean(),failed:v.boolean(),isDone:v.boolean(),continueCursor:v.string()})),
   handler:async(ctx,args)=>{
     const founder=args.role==="founder"?await ctx.db.query("founders").withIndex("by_link_hash",q=>q.eq("linkHash",args.linkHash)).unique():null;
-    const operatorLink=args.role==="operator"?await ctx.db.query("operatorLinks").withIndex("by_link_hash",q=>q.eq("linkHash",args.linkHash)).unique():null;
-    if(!founder&&!operatorLink)return null;
-    const sender=founder??await ctx.db.query("operators").withIndex("by_operator_id",q=>q.eq("operatorId",operatorLink!.operatorId)).unique();
-    if(!sender)return null;
-    const page=founder
-      ?await ctx.db.query("operatorRequests").withIndex("by_founder",q=>q.eq("founderId",founder._id)).paginate(args.paginationOpts)
-      :await ctx.db.query("founderChoices").withIndex("by_operator_status",q=>q.eq("operatorId",operatorLink!.operatorId).eq("status","Requested")).paginate(args.paginationOpts);
-    const introductions=[];let pending=false,failed=false;
+    const link=args.role==="operator"?await ctx.db.query("operatorLinks").withIndex("by_link_hash",q=>q.eq("linkHash",args.linkHash)).unique():null;
+    if(!founder&&!link)return null;
+    if(link&&!await ctx.db.query("operators").withIndex("by_operator_id",q=>q.eq("operatorId",link.operatorId)).unique())return null;
+    const page=founder?await ctx.db.query("operatorRequests").withIndex("by_founder",q=>q.eq("founderId",founder._id)).paginate(args.paginationOpts):await ctx.db.query("founderChoices").withIndex("by_operator_status",q=>q.eq("operatorId",link!.operatorId).eq("status","Requested")).paginate(args.paginationOpts);
+    const introductions=[];
     for(const row of page.page){
       const choice=founder?await ctx.db.query("founderChoices").withIndex("by_founder_operator",q=>q.eq("founderId",founder._id).eq("operatorId",row.operatorId)).unique():row as import("./_generated/dataModel").Doc<"founderChoices">;
       if(!choice)continue;
@@ -55,45 +34,27 @@ export const list=internalMutation({
         if(founder)introductions.push({...label,requestId:choice._id,requestedAt:"requestedAt" in row?row.requestedAt:choice.updatedAt,status:response?.status==="Not relevant"?"Declined" as const:"Requested" as const,seen:true as const});
         continue;
       }
-      let intro=await ctx.db.query("introductions").withIndex("by_request_identity",q=>q.eq("requestId",choice._id).eq("requestedAt",response.requestedAt)).unique();
-      if(!intro){
-        const id=await ctx.db.insert("introductions",{requestId:choice._id,searchId:response.searchId,requestedAt:response.requestedAt,founderId:choice.founderId,operatorId:choice.operatorId,status:"queued"});
-        await ctx.scheduler.runAfter(0,internal.introductionWelcome.generate,{introductionId:id});
-        intro=await ctx.db.get(id);
-      }
-      if(!intro||intro.searchId!==response.searchId)continue;
-      let paymentInfo:{paymentLabel?:string}={};
+      let paymentInfo:{paymentLabel?:string;locked?:true;qrUrl?:string|null}={};
       if(founder){
-        const access=await accessFor(ctx,founder._id,choice.operatorId);
-        paymentInfo={paymentLabel:paymentLabel(access)};
-        if(intro.founderSeenAt!==undefined&&!access.grandfathered)await ctx.db.patch(access._id,{grandfathered:true});
-        const previouslyRevealed=intro.founderSeenAt!==undefined||access.grandfathered;
-        if(!access.free&&!access.paidAt&&!previouslyRevealed){const settings=await ctx.db.query("revealSettings").withIndex("by_key",q=>q.eq("key","payment")).unique();introductions.push({...label,...paymentInfo,requestId:choice._id,requestedAt:response.requestedAt,locked:true as const,seen:false as const,qrUrl:settings?await ctx.storage.getUrl(settings.qrStorageId):null});continue;}
+        const access=await ctx.db.query("founderOperatorAccess").withIndex("by_founder_operator",q=>q.eq("founderId",founder._id).eq("operatorId",choice.operatorId)).unique();
+        const allowance=await ctx.db.query("founderRevealAllowances").withIndex("by_founder",q=>q.eq("founderId",founder._id)).unique();
+        const freeFallback=!access&&(!allowance||allowance.firstOperatorId===choice.operatorId);
+        paymentInfo={paymentLabel:paymentLabel(access,freeFallback)};
+        if(!access?.free&&!access?.paidAt&&!access?.grandfathered&&!freeFallback){
+          const settings=await ctx.db.query("revealSettings").withIndex("by_key",q=>q.eq("key","payment")).unique();
+          paymentInfo={...paymentInfo,locked:true,qrUrl:settings?await ctx.storage.getUrl(settings.qrStorageId):null};
+        }
       }
-      if(intro.status!=="ready"||!intro.welcome){if(intro.status==="failed")failed=true;else pending=true;if(founder)introductions.push({...label,...paymentInfo,requestId:choice._id,requestedAt:response.requestedAt,status:"Accepted" as const,seen:true as const});continue;}
-      const person=founder?await ctx.db.query("operators").withIndex("by_operator_id",q=>q.eq("operatorId",choice.operatorId)).unique():await ctx.db.get(choice.founderId);
-      if(!person)continue;
-      introductions.push({...label,...paymentInfo,requestId:choice._id,requestedAt:response.requestedAt,welcome:intro.welcome,name:person.name,whatsappNumber:person.whatsappNumber,senderName:sender.name,...(known(sender.company)?{senderCompany:sender.company}:{}),...(known(person.company)?{company:person.company}:{}),...(known(person.location)?{location:person.location}:{}),seen:(founder?intro.founderSeenAt:intro.operatorSeenAt)!==undefined});
+      introductions.push({...label,...paymentInfo,requestId:choice._id,requestedAt:response.requestedAt,status:"Accepted" as const,seen:true as const});
     }
-    return {introductions,pending,failed,isDone:page.isDone,continueCursor:page.continueCursor};
+    return {introductions,pending:false,failed:false,isDone:page.isDone,continueCursor:page.continueCursor};
   },
 });
-
-export const seen=internalMutation({
-  args:{linkHash:v.string(),role:roleValidator,requestId:v.id("founderChoices"),requestedAt:v.number()},returns:v.boolean(),
-  handler:async(ctx,args)=>{
-    const founder=args.role==="founder"?await ctx.db.query("founders").withIndex("by_link_hash",q=>q.eq("linkHash",args.linkHash)).unique():null;
-    const link=args.role==="operator"?await ctx.db.query("operatorLinks").withIndex("by_link_hash",q=>q.eq("linkHash",args.linkHash)).unique():null;
-    if(!founder&&!link)return false;
-    const choice=await ctx.db.get(args.requestId);
-    if(!choice||(founder?choice.founderId!==founder._id:choice.operatorId!==link!.operatorId))return false;
-    const response=await currentResponse(ctx,choice);
-    if(response?.status!=="Interested"||response.requestedAt!==args.requestedAt)return false;
-    const intro=await ctx.db.query("introductions").withIndex("by_request_identity",q=>q.eq("requestId",choice._id).eq("requestedAt",args.requestedAt)).unique();
-    if(!intro||intro.status!=="ready"||intro.searchId!==response.searchId)return false;
-    if(founder){const access=await accessFor(ctx,founder._id,choice.operatorId);if(!access.free&&!access.paidAt&&!access.grandfathered&&intro.founderSeenAt===undefined)return false;}
-    const field=founder?"founderSeenAt":"operatorSeenAt";
-    if(intro[field]===undefined)await ctx.db.patch(intro._id,{[field]:Date.now()});
-    return true;
-  },
-});
+// Old cached clients may still call this endpoint. Acknowledging it never reveals contacts or changes data.
+export const seen=internalMutation({args:{linkHash:v.string(),role:roleValidator,requestId:v.id("founderChoices"),requestedAt:v.number()},returns:v.boolean(),handler:async(ctx,args)=>{
+  const founder=args.role==="founder"?await ctx.db.query("founders").withIndex("by_link_hash",q=>q.eq("linkHash",args.linkHash)).unique():null;
+  const link=args.role==="operator"?await ctx.db.query("operatorLinks").withIndex("by_link_hash",q=>q.eq("linkHash",args.linkHash)).unique():null;
+  if(!founder&&!link)return false;
+  const choice=await ctx.db.get(args.requestId);if(!choice||(founder?choice.founderId!==founder._id:choice.operatorId!==link!.operatorId))return false;
+  const response=await currentResponse(ctx,choice);return response?.status==="Interested"&&response.requestedAt===args.requestedAt;
+}});

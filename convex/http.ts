@@ -3,6 +3,7 @@ import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import * as applications from "./operatorApplicationHttp";
 import {http as notify} from "./adminNotifications";
+import {http as introduce} from "./adminIntroductions";
 import {decryptCode} from "./lib/operatorLinkSecrets";
 import {revenueText} from "./lib/revenueLabels";
 import {http as paymentAdmin} from "./revealPaymentHttp";
@@ -16,6 +17,7 @@ http.route({path:"/admin/operator-applications",method:"POST",handler:applicatio
 http.route({path:"/admin/operator-applications/approve",method:"POST",handler:applications.admin});
 http.route({path:"/admin/approved-operators",method:"POST",handler:applications.admin});
 http.route({path:"/admin/notify-operator",method:"POST",handler:notify});
+http.route({path:"/admin/introduce",method:"POST",handler:introduce});
 for(const path of ["/introductions","/introductions/seen"]){
   http.route({path,method:"POST",handler:httpAction(async(ctx,request)=>{
     const headers={"Content-Type":"application/json","Cache-Control":"no-store","Referrer-Policy":"no-referrer"};
@@ -33,7 +35,7 @@ for(const path of ["/introductions","/introductions/seen"]){
         return saved?reply({seen:true},200):reply({error:"This request is no longer accepted."},409);
       }
       if(body.cursor!==undefined&&body.cursor!==null&&(typeof body.cursor!=="string"||body.cursor.length>1500))return reply({error:"Invalid request."},400);
-      const result=await ctx.runMutation(internal.introductions.list,{linkHash,role:body.role,paginationOpts:{numItems:20,cursor:body.cursor??null}});
+      const result=await ctx.runQuery(internal.introductions.list,{linkHash,role:body.role,paginationOpts:{numItems:20,cursor:body.cursor??null}});
       return result?reply(result,200):reply({error:"Invalid link."},404);
     }catch{return reply({error:"Busy right now. Try again in a few minutes."},503);}
   })});

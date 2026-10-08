@@ -1,164 +1,40 @@
-// Both screens use the same owner-checked endpoint. Contacts are never kept in browser storage.
+﻿// Contacts are never rendered, even if an old or cached response includes them.
 (() => {
-  const role = location.pathname === '/operator.html' ? 'operator' : 'founder';
-  const prefix = role === 'operator' ? 'o' : 'f';
-  const main = document.querySelector('main');
-  const cards = document.createElement('section');
-  cards.id = 'connections'; cards.hidden = true; cards.setAttribute('aria-label', role === 'founder' ? 'Your operators' : 'Your accepted connections');
-  const founderCards = document.getElementById('confirmed-cards');
-  if (role === 'founder' && founderCards) founderCards.append(cards);
-  else main.prepend(cards);
-  const empty = role === 'founder' ? document.getElementById('confirmed-empty') : null;
-  const dialog = document.createElement('dialog');
-  dialog.className = 'connection-reveal'; dialog.setAttribute('aria-labelledby', 'connection-title');
-  document.body.append(dialog);
-  let version = 0, controller, code, timer, active, queue = [], seen = new Set();
-  let pendingNoticeShown = false, pendingNoticeDismissed = false;
-  const onConnectionScreen = () => role === 'operator' || new URL(location.href).searchParams.get('screen') === 'results';
-  const clearPendingNotice = () => {
-    if (pendingNoticeShown) pendingNoticeDismissed = true;
-    cards.querySelector('[data-connection-error]')?.remove();
-    if (!cards.childElementCount) cards.hidden = true;
-  };
-  window.addEventListener('besto:founder-screen-changed', clearPendingNotice);
-  window.addEventListener('popstate', clearPendingNotice);
-  const key = row => row.requestId + ':' + row.requestedAt + ':' + (row.locked?'locked':'open');
-  const clear = () => { dialog.close(); dialog.replaceChildren(); cards.replaceChildren(); cards.hidden = true; active = undefined; queue = []; };
-  const post = async (path, body, signal) => {
-    const response = await fetch('/api/' + path, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({code, role, ...body}), cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer', signal: AbortSignal.any([signal, AbortSignal.timeout(15000)])});
-    if (!response.ok) throw new Error('Connection unavailable');
-    return response.json();
-  };
-  function details(row, fullScreen = false) {
-    const article = document.createElement('article'); article.className = 'connection-card';
-    article.dataset.requestId = row.requestId;
-    if (role === 'founder' && !fullScreen) {
-      article.dataset.operatorId = row.operatorId || '';
-      const label = document.createElement('h2');
-      label.textContent = Number.isSafeInteger(row.operatorNumber) && row.operatorNumber > 0 ? `Operator ${row.operatorNumber}` : 'Operator';
-      article.append(label);
-    }
-    if (role === 'founder' && !fullScreen && !row.locked) {
-      const status = document.createElement('p');
-      status.className = 'meeting-status'; status.textContent = row.locked ? 'Locked until payment' : row.status || 'Accepted';
-      article.append(status);
-      if (row.paymentLabel) {
-        const payment = document.createElement('p'); payment.className = 'payment-status';
-        payment.textContent = row.paymentLabel; article.append(payment);
-      }
-    }
-    if (row.status) {
-      const note = document.createElement('p');
-      note.textContent = row.status === 'Requested' ? 'Waiting for the operator to respond.' : row.status === 'Declined' ? 'The operator declined this request.' : 'Your accepted introduction is being prepared.';
-      article.append(note); return article;
-    }
+  const role=location.pathname==='/operator.html'?'operator':'founder',prefix=role==='operator'?'o':'f';
+  const main=document.querySelector('main'),cards=document.createElement('section');
+  cards.id='connections';cards.hidden=true;cards.setAttribute('aria-label',role==='founder'?'Your operators':'Your accepted connections');
+  const founderCards=document.getElementById('confirmed-cards'),empty=role==='founder'?document.getElementById('confirmed-empty'):null;
+  if(role==='founder'&&founderCards)founderCards.append(cards);else main.prepend(cards);
+  let version=0,controller,timer;
+  function details(row){
+    const article=document.createElement('article');article.className='connection-card';article.dataset.requestId=row.requestId;
+    if(role==='founder'){article.dataset.operatorId=row.operatorId||'';const label=document.createElement('h2');label.textContent=Number.isSafeInteger(row.operatorNumber)&&row.operatorNumber>0?`Operator ${row.operatorNumber}`:'Operator';article.append(label);}
+    const status=row.status||'Accepted';
+    const note=document.createElement('p');note.className='meeting-status';note.textContent=status==='Requested'?'Waiting for the operator to respond.':status==='Declined'?'The operator declined this request.':'Accepted. Besto will introduce you on WhatsApp shortly.';article.append(note);
+    if(row.paymentLabel){const payment=document.createElement('p');payment.className='payment-status';payment.textContent=row.paymentLabel;article.append(payment);}
     if(row.locked){
-      const heading=document.createElement(fullScreen?'h1':'h2');heading.textContent='Accepted. Pay to see who it is.';
-      if(fullScreen){heading.id='connection-title';heading.tabIndex=-1;}
-      const note=document.createElement('p');note.textContent="Pay ₹499 to see this operator's details. Scan the QR with any UPI app. Your operator unlocks once payment is confirmed.";article.append(heading,note);
-      if(row.qrUrl){const qr=document.createElement('img');qr.src=row.qrUrl;qr.alt='UPI payment QR code';qr.className='payment-qr';article.append(qr);}
-      else{const missing=document.createElement('p');missing.textContent='The payment QR is not available yet. Please check back shortly.';article.append(missing);}
-      const waiting=document.createElement('p');waiting.textContent='Waiting for payment confirmation.';waiting.setAttribute('role','status');article.append(waiting);return article;
-    }
-    const heading = document.createElement(fullScreen ? 'h1' : 'h2');
-    heading.textContent = 'You’re connected';
-    if (fullScreen) { heading.id = 'connection-title'; heading.tabIndex = -1; }
-    const welcome = document.createElement('p'); welcome.className = 'connection-welcome'; welcome.textContent = row.welcome;
-    const name = document.createElement('p'), phone = document.createElement('p');
-    name.className = 'connection-name'; phone.className = 'connection-phone';
-    const nameBold = document.createElement('strong'), phoneBold = document.createElement('strong');
-    nameBold.textContent = row.name; phoneBold.textContent = row.whatsappNumber;
-    name.append(nameBold); phone.append(phoneBold); article.append(heading, welcome, name, phone);
-    for (const field of ['company', 'location']) if (row[field]) {
-      const fact = document.createElement('p'); fact.className = 'connection-fact'; fact.textContent = row[field]; article.append(fact);
-    }
-    const savedDigits = row.whatsappNumber.replace(/\D/g, '');
-    const digits = savedDigits.length === 10 ? '91' + savedDigits : savedDigits;
-    if (digits.length >= 7 && digits.length <= 15) {
-      const message = document.createElement('a'); message.className = 'primary connection-whatsapp'; message.textContent = 'Message on WhatsApp';
-      const firstName = row.name.trim().split(/\s+/u)[0] || 'there';
-      const text = `Hi ${firstName}, I'm ${row.senderName}${row.senderCompany ? ' from ' + row.senderCompany : ''}. We were introduced through Besto. Would love to set up a quick call.`;
-      message.href = 'https://wa.me/' + digits + '?text=' + encodeURIComponent(text); message.target = '_blank'; message.rel = 'noopener noreferrer'; message.referrerPolicy = 'no-referrer'; article.append(message);
-    } else {
-      const note = document.createElement('p'); note.className = 'connection-fact'; note.textContent = 'A WhatsApp number has not been saved yet.'; article.append(note);
+      const message=document.createElement('p');message.textContent='Pay ₹499 for a WhatsApp introduction. Scan the QR with any UPI app. Besto will introduce you after payment is confirmed.';article.append(message);
+      if(row.qrUrl){const qr=document.createElement('img');qr.src=row.qrUrl;qr.alt='UPI payment QR code';qr.className='payment-qr';article.append(qr);}else{const missing=document.createElement('p');missing.textContent='The payment QR is not available yet. Please check back shortly.';article.append(missing);}
+      const waiting=document.createElement('p');waiting.textContent='Waiting for payment confirmation.';waiting.setAttribute('role','status');article.append(waiting);
     }
     return article;
   }
-  async function recordSeen(row, currentVersion) {
-    if(row.locked){if(currentVersion===version)seen.add(key(row));return currentVersion===version;}
-    try {
-      await post('introductions/seen', {requestId: row.requestId, requestedAt: row.requestedAt}, controller.signal);
-      if (currentVersion === version) seen.add(key(row));
-      return currentVersion === version;
-    } catch { return false; }
+  const clear=()=>{cards.replaceChildren();cards.hidden=true;};
+  async function refresh(){
+    const code=new RegExp('^#'+prefix+'=([A-Za-z0-9_-]{43})$').exec(location.hash)?.[1];
+    if(!code||document.hidden)return;
+    const current=++version;controller?.abort();controller=new AbortController();const signal=controller.signal;
+    try{
+      let cursor=null,rows=[];
+      do{const response=await fetch('/api/introductions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,role,cursor}),cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',signal:AbortSignal.any([signal,AbortSignal.timeout(15000)])});if(!response.ok)throw Error();const result=await response.json();if(current!==version||signal.aborted)return;rows.push(...result.introductions);cursor=result.isDone?null:result.continueCursor;}while(cursor);
+      if(role==='founder')window.dispatchEvent(new CustomEvent('besto:requested-operators',{detail:rows.map(row=>row.operatorId).filter(Boolean)}));
+      cards.replaceChildren(...rows.map(details));cards.hidden=rows.length===0;
+      if(empty){empty.hidden=rows.length>0;empty.textContent='No requested operators yet. Request to meet a best-fit operator to get started.';}
+    }catch{if(current!==version||signal.aborted)return;clear();if(empty){empty.hidden=false;empty.textContent='Your operators could not load. Reload to try again.';}}
+    finally{if(current===version){clearTimeout(timer);timer=setTimeout(refresh,15000);}}
   }
-  function revealNext(currentVersion) {
-    if (currentVersion !== version || !queue.length) { dialog.close(); dialog.replaceChildren(); active = undefined; return; }
-    const row = queue.shift(); active = row;
-    const content = details(row, true);
-    const continueButton = document.createElement('button'); continueButton.type = 'button'; continueButton.className = 'secondary connection-continue'; continueButton.textContent = 'Continue';
-    const note = document.createElement('p'); note.className = 'connection-note'; note.hidden = true; note.setAttribute('role', 'status');
-    continueButton.addEventListener('click', async () => {
-      continueButton.disabled = true;
-      if (!seen.has(key(row)) && !await recordSeen(row, currentVersion)) {
-        note.textContent = 'Could not save this view. Check your connection and try again.'; note.hidden = false; continueButton.disabled = false; return;
-      }
-      revealNext(currentVersion);
-    });
-    content.append(continueButton, note);
-    const shell = document.createElement('div'); shell.className = 'reveal-shell';
-    shell.append(document.querySelector('body > .brand-header').cloneNode(true), content, document.querySelector('body > .brand-footer').cloneNode(true));
-    dialog.replaceChildren(shell);
-    if (!dialog.open) dialog.showModal();
-    content.querySelector('h1').focus({preventScroll: true}); dialog.scrollTop = 0;
-    // Save only after the welcome has actually been painted, independently for each person.
-    requestAnimationFrame(() => requestAnimationFrame(() => { if (currentVersion === version && dialog.open && active === row) recordSeen(row, currentVersion); }));
-  }
-  dialog.addEventListener('cancel', event => {event.preventDefault(); dialog.querySelector('.connection-continue')?.click();});
-  async function refresh(reset = false, allowReveal = false) {
-    const fragment = new RegExp('^#' + prefix + '=([A-Za-z0-9_-]{43})$').exec(location.hash);
-    if (reset) { version++; controller?.abort(); clearTimeout(timer); clear(); seen.clear(); pendingNoticeShown = false; pendingNoticeDismissed = false; }
-    code = fragment?.[1];
-    if (!code || document.hidden) return;
-    const currentVersion = version;
-    controller?.abort(); controller = new AbortController(); const signal = controller.signal;
-    try {
-      let cursor = null, rows = [], pending = false, failed = false;
-      do {
-        const result = await post('introductions', {cursor}, signal);
-        if (currentVersion !== version || signal.aborted) return;
-        rows.push(...result.introductions); pending ||= result.pending; failed ||= result.failed === true;
-        cursor = result.isDone ? null : result.continueCursor;
-      } while (cursor);
-      const showPending = failed && onConnectionScreen() && !pendingNoticeDismissed;
-      if (role === 'founder') window.dispatchEvent(new CustomEvent('besto:requested-operators', {detail: rows.map(row => row.operatorId).filter(Boolean)}));
-      cards.replaceChildren(...rows.map(row => details(row))); cards.hidden = rows.length === 0 && !showPending;
-      if (empty) {empty.hidden = rows.length > 0; empty.textContent = 'No requested operators yet. Request to meet a best-fit operator to get started.';}
-      if (showPending) {
-        pendingNoticeShown = true;
-        const notice = document.createElement('p'); notice.dataset.connectionError = 'true'; notice.className = 'connection-card'; notice.textContent = 'Busy right now. Try again in a few minutes.'; notice.setAttribute('role', 'status'); cards.append(notice);
-      }
-      if (active && !rows.some(row => key(row) === key(active) && Boolean(row.locked)===Boolean(active.locked))) { dialog.close(); dialog.replaceChildren(); active = undefined; }
-      if (allowReveal && !active) {
-        queue = rows.filter(row => !row.seen && !seen.has(key(row)));
-        if (queue.length) revealNext(currentVersion);
-      } else queue = queue.filter(item => rows.some(row => key(row) === key(item)));
-      clearTimeout(timer);
-      timer = setTimeout(() => refresh(false, allowReveal), pending ? 2500 : 15000);
-    } catch {
-      if (currentVersion !== version || signal.aborted) return;
-      clear(); clearTimeout(timer);
-      if (empty) {empty.hidden = false; empty.textContent = 'Your operators could not load. Reload to try again.';}
-      timer = setTimeout(() => refresh(false, allowReveal), 15000);
-    }
-  }
-  window.addEventListener('hashchange', () => refresh(true, true));
-  window.addEventListener('pageshow', () => refresh(true, true));
-  window.addEventListener('pagehide', () => {version++; controller?.abort(); clearTimeout(timer); clear();});
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {version++; controller?.abort(); clearTimeout(timer); clear();}
-    else refresh(false, true);
-  });
-  window.addEventListener('connection-status-changed', () => {version++; controller?.abort(); clearTimeout(timer); clear(); refresh(false, false);});
-  if (document.readyState === 'complete') refresh(true, true);
+  window.addEventListener('hashchange',()=>{clear();void refresh();});window.addEventListener('pageshow',()=>void refresh());
+  window.addEventListener('pagehide',()=>{version++;controller?.abort();clearTimeout(timer);clear();});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){version++;controller?.abort();clearTimeout(timer);}else void refresh();});
+  window.addEventListener('connection-status-changed',()=>void refresh());void refresh();
 })();
