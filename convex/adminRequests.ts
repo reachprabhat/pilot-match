@@ -49,7 +49,8 @@ export const list=internalQuery({
       const access=response?.status==="Interested"?await ctx.db.query("founderOperatorAccess").withIndex("by_founder_operator",q=>q.eq("founderId",founder._id).eq("operatorId",choice.operatorId)).unique():null;
       const allowance=await ctx.db.query("founderRevealAllowances").withIndex("by_founder",q=>q.eq("founderId",founder._id)).unique();
       const manual=response?.status==="Interested"?await ctx.db.query("adminIntroductions").withIndex("by_request_identity",q=>q.eq("requestId",choice._id).eq("requestedAt",identity.requestedAt)).unique():null;
-      const paymentStatus=access?.free||access?.grandfathered||!access&&!allowance||!access&&allowance?.firstOperatorId===choice.operatorId?"Free" as const:access?.paidAt?"Paid" as const:"Locked" as const;
+      // A saved payment takes precedence over legacy access when choosing admin controls.
+      const paymentStatus=access?.paidAt?"Paid" as const:access?.free||access?.grandfathered||!access&&!allowance||!access&&allowance?.firstOperatorId===choice.operatorId?"Free" as const:"Locked" as const;
       requests.push({requestId:choice._id,founderId:founder.founderId,operatorId:choice.operatorId,operatorNumber:publicOperatorNumber(operator),requestedAt:identity.requestedAt,
         status:response?.status==="Interested"?"Accepted" as const:"Requested" as const,
         ask:clean(search.ask),operatorName:operator.name,operatorPhone:operator.whatsappNumber,founderCompany:founder.company,
