@@ -60,7 +60,7 @@ The story: \[The startup founder wants to meet relevant operators/promoters with
 6. The founder should be able to choose "Request to meet" or "Park" or "Reject"
 7. Once the founder has selected "Request to meet", AI should automatically send a notification along with the structured business opportunity card to the selected Operator. Structured business card should not reveal the name of founder/startup yet. Also, the business card should be customized based on operator's profile and intent.
 8. The operator should be able to view the business opportunity card along with option to "Interested" or "Not Relevant".
-9. If the operator selects "Interested", send one AI-generated introduction to both along with name and contact details on their respective WhatsApp contact number.
+9. If the operator selects "Interested", both personal screens show "Accepted. Besto will introduce you on WhatsApp shortly." and never show contact details. Prabhat uses the admin Introduce to founder and Introduce to operator buttons to open individual WhatsApp drafts naming both people, roles, companies and contact numbers. Paid connects require confirmed payment first; the first connection remains free. After both admin taps, the admin request shows Introduced. Prabhat sends each draft in WhatsApp.
 
 Below steps are nice to have and are to be parked for future development
 12. After a week, check if they have met.
