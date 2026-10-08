@@ -2,9 +2,10 @@ import {httpAction} from "./_generated/server";
 import {internal} from "./_generated/api";
 import {validateApplication,pilotPreferences,helpAreas,revenueRanges,consentText} from "./lib/operatorApplication";
 import {proposedLink,decryptCode} from "./lib/operatorLinkSecrets";
+import {revenueLabels} from "./lib/revenueLabels";
 const headers={"Content-Type":"application/json","Cache-Control":"no-store","Referrer-Policy":"no-referrer"};
 const reply=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers});
-export const options=httpAction(async()=>reply({pilotPreferences,helpAreas,revenueRanges,consentText}));
+export const options=httpAction(async()=>reply({pilotPreferences,helpAreas,revenueRanges,revenueLabels,consentText}));
 export const submit=httpAction(async(ctx,request)=>{
   try{
     if(Number(request.headers.get("content-length"))>8192)return reply({error:"Check your answers and try again."},400);

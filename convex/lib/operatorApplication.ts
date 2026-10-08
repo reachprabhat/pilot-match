@@ -1,6 +1,7 @@
 export const pilotPreferences = ["Food", "Glassware", "Electrical goods", "Automotive safety", "Automobile manufacturing", "Alcoholic beverages", "Digital healthcare", "Stainless steel", "Office furniture", "Other"];
 export const helpAreas = ["Raw material costs", "Energy costs", "Packaging costs", "Supply chain disruptions", "Shipping disruptions", "Currency swings", "Regulatory shifts", "Physical impacts", "Seasonal sales", "Geopolitical uncertainty", "Competition", "Working capital"];
-export const revenueRanges = ["Below ₹1 crore", "₹1–less than ₹10 crore", "₹10–less than ₹50 crore", "₹50–less than ₹100 crore", "₹100–less than ₹500 crore", "₹500–less than ₹1,000 crore", "₹1,000 crore or more", "Prefer not to disclose"];
+import {revenueRanges} from "./revenueLabels";
+export {revenueRanges} from "./revenueLabels";
 export const consentText = "I agree founders I accept can see my name and WhatsApp.";
 export type ApplicationInput = {name:string;company:string;role:string;city:string;whatsapp:string;linkedin:string;revenue:string;preferences:string[];areas:string[];consent:boolean;painPoints?:string;industryOther?:string};
 export function validateApplication(input:unknown,legacyIndustry=false):ApplicationInput {

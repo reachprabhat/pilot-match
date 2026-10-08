@@ -1,4 +1,5 @@
 import {internalQuery} from "./_generated/server";
+import {revenueText} from "./lib/revenueLabels";
 import {paginationOptsValidator} from "convex/server";
 import {v} from "convex/values";
 import {privateOpportunity} from "./lib/opportunity";
@@ -33,7 +34,7 @@ export const list=internalQuery({
         ...(present(founder.industry)?{industry:clean(founder.industry)}:{}),
         ...(features.length?{topFeatures:features.map(clean)}:{}),
         ...(/^\d+(?:\s+pilots?(?:\s+(?:done|completed))?)?$/i.test(pilots)?{pilotsDone:pilots.match(/^\d+/)![0]}:{}),
-        ...(present(why)?{why:clean(why!)}:{}),
+        ...(present(why)?{why:revenueText(clean(why!))}:{}),
       });
     }
     return {requests,continueCursor:page.continueCursor,isDone:page.isDone};

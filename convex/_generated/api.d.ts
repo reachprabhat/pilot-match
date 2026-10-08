@@ -32,6 +32,7 @@ import type * as lib_operatorNumbers from "../lib/operatorNumbers.js";
 import type * as lib_opportunity from "../lib/opportunity.js";
 import type * as lib_paymentLabel from "../lib/paymentLabel.js";
 import type * as lib_repairDash from "../lib/repairDash.js";
+import type * as lib_revenueLabels from "../lib/revenueLabels.js";
 import type * as lib_safeWelcomeError from "../lib/safeWelcomeError.js";
 import type * as matching from "../matching.js";
 import type * as matchingDiagnosticStore from "../matchingDiagnosticStore.js";
@@ -91,6 +92,7 @@ declare const fullApi: ApiFromModules<{
   "lib/opportunity": typeof lib_opportunity;
   "lib/paymentLabel": typeof lib_paymentLabel;
   "lib/repairDash": typeof lib_repairDash;
+  "lib/revenueLabels": typeof lib_revenueLabels;
   "lib/safeWelcomeError": typeof lib_safeWelcomeError;
   matching: typeof matching;
   matchingDiagnosticStore: typeof matchingDiagnosticStore;

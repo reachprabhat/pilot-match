@@ -1,3 +1,4 @@
+import {revenueLabel} from "./revenueLabels";
 type Profile = {name:string;whatsappNumber:string;[key:string]:unknown};
 export type Match = {operatorId:string;score:number;why:string};
 export type MatchingInput = {ask:string;founder:{founderId:string;profileText:string};operators:{operatorId:string;profileText:string}[];privateNames:string[];privatePhones:string[]};
@@ -20,7 +21,7 @@ export function prepareInput(founder:Profile, operators:Profile[], ask:string):M
   const people = [founder,...operators];
   const privateNames = people.map(row => row.name).filter(Boolean);
   const privatePhones = people.map(row => row.whatsappNumber).filter(Boolean);
-  const text = (row:Profile, fields:string[]) => redact(fields.map(field => `${field}: ${String(row[field] ?? 'not found')}`).join('\n'),privateNames,privatePhones);
+  const text = (row:Profile, fields:string[]) => redact(fields.map(field => `${field}: ${field === 'revenueBand' ? revenueLabel(String(row[field] ?? 'not found')) : String(row[field] ?? 'not found')}`).join('\n'),privateNames,privatePhones);
   return {ask:redact(ask,privateNames,privatePhones),
     founder:{founderId:String(founder.founderId),profileText:text(founder,['headline','currentRole','company','about','industry','pilotDone','topFeatures'])},
     operators:operators.map(row=>({operatorId:String(row.operatorId),profileText:text(row,['headline','currentRole','company','about','industry','revenueBand','companyProblems'])})),privateNames,privatePhones};

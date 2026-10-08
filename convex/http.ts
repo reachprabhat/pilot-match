@@ -4,6 +4,7 @@ import { internal } from "./_generated/api";
 import * as applications from "./operatorApplicationHttp";
 import {http as notify} from "./adminNotifications";
 import {decryptCode} from "./lib/operatorLinkSecrets";
+import {revenueText} from "./lib/revenueLabels";
 import {http as paymentAdmin} from "./revealPaymentHttp";
 import {safeWelcomeError as safeAiError} from "./lib/safeWelcomeError";
 
@@ -123,7 +124,7 @@ for(const path of ["/matches","/choice"]){
       if(path==="/matches"){
         const saved=await ctx.runQuery(internal.choices.latest,{linkHash});
         const labels=saved?await ctx.runQuery(internal.operatorNumbers.labels,{operatorIds:saved.matches.map(match=>match.operatorId)}):[];
-        const result=saved?{...saved,matches:saved.matches.map((match,index)=>({...match,operatorNumber:labels[index]}))}:null;
+        const result=saved?{...saved,matches:saved.matches.map((match,index)=>({...match,why:revenueText(match.why),operatorNumber:labels[index]}))}:null;
         return result?reply(result,200):reply({error:"Invalid link."},404);
       }
       if(typeof body.operatorId!=="string"||body.operatorId.length>100||!["Requested","Parked","Rejected"].includes(body.status))return reply({error:"Invalid choice."},400);
@@ -153,7 +154,7 @@ http.route({path:"/search",method:"POST",handler:httpAction(async(ctx,request)=>
     if(result.status==="busy")return reply({error:"Busy right now. Try again in a few minutes."},503);
     if(result.status==="matched"){
       const labels=await ctx.runQuery(internal.operatorNumbers.labels,{operatorIds:result.matches.map(match=>match.operatorId)});
-      return reply({...result,matches:result.matches.map((match,index)=>({...match,operatorNumber:labels[index]}))},200);
+      return reply({...result,matches:result.matches.map((match,index)=>({...match,why:revenueText(match.why),operatorNumber:labels[index]}))},200);
     }
     return reply(result,result.status==="limit_reached"?429:200);
   }catch(error){console.warn("Founder search request failed",{errorMessage:safeAiError(error,process.env.OPENAI_API_KEY)});return reply({error:"Busy right now. Try again in a few minutes."},503);}
