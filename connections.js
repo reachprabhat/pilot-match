@@ -38,7 +38,7 @@
       label.textContent = Number.isSafeInteger(row.operatorNumber) && row.operatorNumber > 0 ? `Operator ${row.operatorNumber}` : 'Operator';
       article.append(label);
     }
-    if (role === 'founder' && !fullScreen) {
+    if (role === 'founder' && !fullScreen && !row.locked) {
       const status = document.createElement('p');
       status.className = 'meeting-status'; status.textContent = row.locked ? 'Locked until payment' : row.status || 'Accepted';
       article.append(status);
