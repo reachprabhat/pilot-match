@@ -1,12 +1,13 @@
-﻿import {internalMutation,internalQuery} from "./_generated/server";
+import {internalMutation,internalQuery} from "./_generated/server";
 import {v} from "convex/values";
 import {paginationOptsValidator} from "convex/server";
 import {currentResponse} from "./lib/meetingResponses";
 import {accessFor} from "./revealPayments";
 import {publicOperatorNumber} from "./lib/operatorNumbers";
 import {paymentLabel} from "./lib/paymentLabel";
+import {firstName,whatsappUrl} from './lib/manualIntroduction';
 export const roleValidator=v.union(v.literal("founder"),v.literal("operator"));
-const rowValidator=v.object({requestId:v.id("founderChoices"),requestedAt:v.number(),status:v.union(v.literal("Requested"),v.literal("Accepted"),v.literal("Declined")),seen:v.literal(true),operatorId:v.optional(v.string()),operatorNumber:v.optional(v.union(v.number(),v.null())),paymentLabel:v.optional(v.string()),locked:v.optional(v.literal(true)),qrUrl:v.optional(v.union(v.string(),v.null()))});
+const rowValidator=v.object({requestId:v.id("founderChoices"),requestedAt:v.number(),status:v.union(v.literal("Requested"),v.literal("Accepted"),v.literal("Declined")),seen:v.literal(true),messageUrl:v.optional(v.string()),operatorFirstName:v.optional(v.string()),operatorId:v.optional(v.string()),operatorNumber:v.optional(v.union(v.number(),v.null())),paymentLabel:v.optional(v.string()),locked:v.optional(v.literal(true)),qrUrl:v.optional(v.union(v.string(),v.null()))});
 // Acceptance reserves the existing free-first/payment allowance. No contacts or AI welcome are generated.
 export const ensureAccepted=internalMutation({args:{requestId:v.id("founderChoices")},returns:v.null(),handler:async(ctx,args)=>{
   const choice=await ctx.db.get(args.requestId),response=choice?await currentResponse(ctx,choice):null;
@@ -34,12 +35,16 @@ export const list=internalQuery({
         if(founder)introductions.push({...label,requestId:choice._id,requestedAt:"requestedAt" in row?row.requestedAt:choice.updatedAt,status:response?.status==="Not relevant"?"Declined" as const:"Requested" as const,seen:true as const});
         continue;
       }
-      let paymentInfo:{paymentLabel?:string;locked?:true;qrUrl?:string|null}={};
+      let paymentInfo:{paymentLabel?:string;locked?:true;qrUrl?:string|null;messageUrl?:string;operatorFirstName?:string}={};
       if(founder){
         const access=await ctx.db.query("founderOperatorAccess").withIndex("by_founder_operator",q=>q.eq("founderId",founder._id).eq("operatorId",choice.operatorId)).unique();
         const allowance=await ctx.db.query("founderRevealAllowances").withIndex("by_founder",q=>q.eq("founderId",founder._id)).unique();
         const freeFallback=!access&&(!allowance||allowance.firstOperatorId===choice.operatorId);
-        paymentInfo={paymentLabel:paymentLabel(access,freeFallback)};
+        paymentInfo={paymentLabel:paymentLabel(access,freeFallback)};        const manual=await ctx.db.query('adminIntroductions').withIndex('by_request_identity',q=>q.eq('requestId',choice._id).eq('requestedAt',response.requestedAt)).unique();
+        if(access?.paidAt&&!access.free&&manual?.founderOpenedAt!==undefined&&operator){
+          const draft=await ctx.db.query('introductionDrafts').withIndex('by_identity',q=>q.eq('requestId',choice._id).eq('requestedAt',response.requestedAt).eq('kind','outreach')).unique();
+          if(draft?.status==='ready')paymentInfo={...paymentInfo,messageUrl:whatsappUrl(operator.whatsappNumber,draft.message),operatorFirstName:firstName(operator.name)};
+        }
         if(!access?.free&&!access?.paidAt&&!access?.grandfathered&&!freeFallback){
           const settings=await ctx.db.query("revealSettings").withIndex("by_key",q=>q.eq("key","payment")).unique();
           paymentInfo={...paymentInfo,locked:true,qrUrl:settings?await ctx.storage.getUrl(settings.qrStorageId):null};

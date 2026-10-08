@@ -29,3 +29,5 @@ html:has(.connection-reveal[open]) { overflow: hidden; }
   .connection-reveal .connection-fact:last-of-type { margin-bottom: 32px; }
 }
  .payment-qr {display:block;width:min(240px,100%);height:auto;aspect-ratio:1;object-fit:contain;margin:16px auto;background:#fff;border-radius:12px;}
+
+.founder-whatsapp{display:block;margin-top:16px;padding:14px 16px;background:#13833b;color:#fff;border-radius:12px;text-align:center;text-decoration:none;font-weight:600;overflow-wrap:anywhere}.founder-whatsapp:hover{background:#106f32}.founder-whatsapp:focus-visible{outline:3px solid var(--navy,#152747);outline-offset:3px}

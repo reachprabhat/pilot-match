@@ -7,6 +7,7 @@ import {operatorResponseValidator} from "./responseValidators";
 import {applicationFields} from "./operatorApplicationValidators";
 
 export default defineSchema({
+  introductionDrafts:defineTable({requestId:v.id("founderChoices"),requestedAt:v.number(),kind:v.union(v.literal("founder"),v.literal("operator"),v.literal("outreach")),message:v.string(),status:v.union(v.literal("running"),v.literal("ready")),source:v.union(v.literal("ai"),v.literal("template")),startedAt:v.number(),callId:v.optional(v.id("aiCalls")),providerCalled:v.optional(v.boolean())}).index("by_identity",["requestId","requestedAt","kind"]),
   adminIntroductions:defineTable({requestId:v.id("founderChoices"),requestedAt:v.number(),founderOpenedAt:v.optional(v.number()),operatorOpenedAt:v.optional(v.number())}).index("by_request_identity",["requestId","requestedAt"]),
   founderLinkSecrets:defineTable({founderId:v.id("founders"),encryptedCode:v.string()}).index("by_founder",["founderId"]),
   operatorMatchJobs:defineTable({operatorId:v.string(),status:v.union(v.literal("queued"),v.literal("running"),v.literal("ready"),v.literal("failed")),callId:v.optional(v.id("aiCalls")),providerCallCount:v.optional(v.number()),founderCount:v.optional(v.number()),responseId:v.optional(v.string())}).index("by_operator",["operatorId"]),
@@ -64,7 +65,7 @@ export default defineSchema({
     diagnosticSearchId:v.optional(v.id("founderSearches")),
     operatorId: v.optional(v.string()),founderId:v.optional(v.id("founders")),
     startedAt: v.number(),
-    purpose: v.union(v.literal("operator_enrichment"),v.literal("founder_matching"),v.literal("accepted_welcome"),v.literal("operator_approval_matching")),
+    purpose: v.union(v.literal("operator_enrichment"),v.literal("founder_matching"),v.literal("accepted_welcome"),v.literal("operator_approval_matching"),v.literal("introduction_draft")),
     introductionId:v.optional(v.id("introductions")),
   }).index("by_started_at", ["startedAt"]).index("by_diagnostic_search",["diagnosticSearchId"]),
 });

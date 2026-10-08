@@ -41,7 +41,7 @@ export const list=internalQuery({
       }
       const clean=(value:string)=>privateOpportunity(privateOpportunity(value,founder),operator);
       const present=(value:string|undefined)=>Boolean(value?.trim()&&!/^(not found|unknown|n\/a|none|-)$/i.test(value.trim()));
-      const features=(founder.topFeatures??"").split(/\r?\n|;|[•●]/).map(value=>value.replace(/^\s*(?:[-*]|\d+[.)])\s*/,"").trim()).filter(value=>present(value)).slice(0,2);
+      const features=(founder.topFeatures??"").split(/\r?\n|;|[â€¢â—]/).map(value=>value.replace(/^\s*(?:[-*]|\d+[.)])\s*/,"").trim()).filter(value=>present(value)).slice(0,2);
       const pilots=(founder.pilotDone??"").trim();
       const operatorLink=await ctx.db.query("operatorLinks").withIndex("by_operator_id",q=>q.eq("operatorId",operator.operatorId)).unique();
       const secret=await ctx.db.query("operatorLinkSecrets").withIndex("by_operator_id",q=>q.eq("operatorId",operator.operatorId)).unique();
@@ -54,7 +54,7 @@ export const list=internalQuery({
         status:response?.status==="Interested"?"Accepted" as const:"Requested" as const,
         ask:clean(search.ask),operatorName:operator.name,operatorPhone:operator.whatsappNumber,founderCompany:founder.company,
         ...(operatorLink?{operatorLinkHash:operatorLink.linkHash}:{}),...(secret?{encryptedCode:secret.encryptedCode}:{}),...(notification?{notifiedAt:notification.notifiedAt}:{}),
-        ...(response?.status==="Interested"?{founderName:founder.name,founderPhone:founder.whatsappNumber,founderRole:founder.currentRole,operatorRole:operator.currentRole,operatorCompany:operator.company,introduced:manual?.founderOpenedAt!==undefined&&manual?.operatorOpenedAt!==undefined,...(manual?.founderOpenedAt!==undefined?{founderOpenedAt:manual.founderOpenedAt}:{}),...(manual?.operatorOpenedAt!==undefined?{operatorOpenedAt:manual.operatorOpenedAt}:{}),paymentStatus,paymentLabel:paymentLabel(access,!access&&(!allowance||allowance.firstOperatorId===choice.operatorId))}:{}),
+        ...(response?.status==="Interested"?{founderName:founder.name,founderPhone:founder.whatsappNumber,founderRole:founder.currentRole,operatorRole:operator.currentRole,operatorCompany:operator.company,introduced:manual?.founderOpenedAt!==undefined&&(paymentStatus==="Paid"||manual?.operatorOpenedAt!==undefined),...(manual?.founderOpenedAt!==undefined?{founderOpenedAt:manual.founderOpenedAt}:{}),...(manual?.operatorOpenedAt!==undefined?{operatorOpenedAt:manual.operatorOpenedAt}:{}),paymentStatus,paymentLabel:paymentLabel(access,!access&&(!allowance||allowance.firstOperatorId===choice.operatorId))}:{}),
         ...(present(founder.industry)?{industry:clean(founder.industry)}:{}),
         ...(features.length?{topFeatures:features.map(clean)}:{}),
         ...(/^\d+(?:\s+pilots?(?:\s+(?:done|completed))?)?$/i.test(pilots)?{pilotsDone:pilots.match(/^\d+/)![0]}:{}),

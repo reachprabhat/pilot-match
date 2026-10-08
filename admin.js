@@ -27,17 +27,17 @@ function addCard(request){
     const buttons=[];let opening=false;
     const updateIntroduction=()=>{
       statusCell.textContent=request.introduced?'Introduced':'Accepted';
-      introNote.textContent=request.introduced?'Introduced':request.paymentStatus==='Locked'?'Confirm payment before introducing.':request.founderOpenedAt?'Founder introduction opened. Open the operator introduction next.':request.operatorOpenedAt?'Operator introduction opened. Open the founder introduction next.':'Open both introductions, then send each message in WhatsApp.';
-      for(const button of buttons)button.disabled=request.paymentStatus==='Locked'||opening;
+      introNote.textContent=request.introduced?'Introduced':request.paymentStatus==='Locked'?'Confirm payment before introducing.':request.founderOpenedAt?'Founder introduction opened. Open the operator introduction next.':request.operatorOpenedAt?'Operator introduction opened. Open the founder introduction next.':request.paymentStatus==='Paid'?'Open the founder introduction, then send it in WhatsApp.':'Open both introductions, then send each message in WhatsApp.';
+      for(const button of buttons){button.disabled=request.paymentStatus==='Locked'||opening;button.hidden=button.dataset.recipient==='operator'&&request.paymentStatus!=='Free';}
     };
     for(const [recipient,label] of [['founder','Introduce to founder'],['operator','Introduce to operator']]){
-      const button=document.createElement('button');button.type='button';button.className='primary admin-introduce';button.textContent=label;buttons.push(button);introActions.append(button);
+      const button=document.createElement('button');button.type='button';button.className='primary admin-introduce';button.textContent=label;button.dataset.recipient=recipient;buttons.push(button);introActions.append(button);
       button.addEventListener('click',async()=>{
         if(opening||request.paymentStatus==='Locked')return;
         const popup=window.open('about:blank','_blank');if(!popup){introNote.textContent='Allow pop-ups to open WhatsApp, then tap again.';return;}popup.opener=null;
         opening=true;updateIntroduction();introNote.textContent='Opening introduction...';const current=version;
         try{
-          const response=await fetch('/api/admin/introduce',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,requestId:request.requestId,requestedAt:request.requestedAt,recipient}),cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(15000)});
+          const response=await fetch('/api/admin/introduce',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,requestId:request.requestId,requestedAt:request.requestedAt,recipient}),cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(55000)});
           const result=await response.json();if(current!==version||!article.isConnected){popup.close();return;}if(!response.ok)throw Error(result.error||'Could not open the introduction. Try again.');
           const url=new URL(result.url);if(url.origin!=='https://wa.me')throw Error('Could not open the introduction. Try again.');
           popup.location.href=url.href;Object.assign(request,result);opening=false;updateIntroduction();

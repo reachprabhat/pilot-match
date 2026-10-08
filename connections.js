@@ -1,4 +1,4 @@
-﻿// Contacts are never rendered, even if an old or cached response includes them.
+// Stale contact fields are ignored. Only a server-authorized paid introduction adds a WhatsApp draft button.
 (() => {
   const role=location.pathname==='/operator.html'?'operator':'founder',prefix=role==='operator'?'o':'f';
   const main=document.querySelector('main'),cards=document.createElement('section');
@@ -16,6 +16,9 @@
       const message=document.createElement('p');message.textContent='Pay ₹499 for a WhatsApp introduction. Scan the QR with any UPI app. Besto will introduce you after payment is confirmed.';article.append(message);
       if(row.qrUrl){const qr=document.createElement('img');qr.src=row.qrUrl;qr.alt='UPI payment QR code';qr.className='payment-qr';article.append(qr);}else{const missing=document.createElement('p');missing.textContent='The payment QR is not available yet. Please check back shortly.';article.append(missing);}
       const waiting=document.createElement('p');waiting.textContent='Waiting for payment confirmation.';waiting.setAttribute('role','status');article.append(waiting);
+    }
+    if(role==='founder'&&status==='Accepted'&&!row.locked&&row.messageUrl&&row.operatorFirstName){
+      try{const url=new URL(row.messageUrl);if(url.origin==='https://wa.me'&&/^\/\d{10,15}$/.test(url.pathname)){const button=document.createElement('a');button.className='founder-whatsapp';button.textContent=`Message ${row.operatorFirstName} on WhatsApp`;button.href=url.href;button.target='_blank';button.rel='noopener noreferrer';article.append(button);}}catch{}
     }
     return article;
   }

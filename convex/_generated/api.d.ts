@@ -19,6 +19,8 @@ import type * as enrichmentValidators from "../enrichmentValidators.js";
 import type * as founderSearches from "../founderSearches.js";
 import type * as founders from "../founders.js";
 import type * as http from "../http.js";
+import type * as introductionDraftAI from "../introductionDraftAI.js";
+import type * as introductionDraftStore from "../introductionDraftStore.js";
 import type * as introductionStore from "../introductionStore.js";
 import type * as introductionWelcome from "../introductionWelcome.js";
 import type * as introductions from "../introductions.js";
@@ -81,6 +83,8 @@ declare const fullApi: ApiFromModules<{
   founderSearches: typeof founderSearches;
   founders: typeof founders;
   http: typeof http;
+  introductionDraftAI: typeof introductionDraftAI;
+  introductionDraftStore: typeof introductionDraftStore;
   introductionStore: typeof introductionStore;
   introductionWelcome: typeof introductionWelcome;
   introductions: typeof introductions;
