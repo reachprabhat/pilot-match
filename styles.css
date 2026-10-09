@@ -87,6 +87,7 @@ textarea {
   caret-color: var(--accent);
 }
 textarea::placeholder { color: var(--muted); opacity: 1; }
+#pilot-ask::placeholder { color: #666a6e; }
 .search-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; }
 .search-actions p { margin: 0; }
 #founder-company { margin-bottom: 24px; overflow-wrap: anywhere; }
