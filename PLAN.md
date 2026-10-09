@@ -94,3 +94,6 @@ Select the original top two before excluding requested history, rather than prom
 
 ## Approved footer branding, 9 October 2026
 Owner approved dev first, then production: replace plain footer text on founder/operator/admin/signup with the header's existing handshake and Besto styles, centred, with Ask. Match. Meet. using the shared tagline styles. No new logo or separate typography rules. Dev screenshot proof required at 390px for founder header/footer and desktop footer.
+
+## Approved footer left alignment, 9 October 2026
+Owner approved left-aligning all footer logo/text blocks to match the header edge. Dev first with phone/desktop checks, then production; no other changes.

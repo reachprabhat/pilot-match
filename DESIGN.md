@@ -130,3 +130,6 @@ Accepted founder/admin cards share payment labels: Free (first connect), Payment
 
 ## Approved matching footer branding
 Footers reuse the header's exact inline handshake SVG, brand-lockup and brand-wordmark styles. Besto remains Inter 40px bold navy; Ask. Match. Meet. appears below Besto using the shared Inter 16px/20px lighter navy tagline rule. Centre the complete lockup within the existing footer. Header and all page content, buttons, flows and data remain unchanged.
+
+## Approved left-aligned footer update
+The footer logo and text align to the header's left edge on every screen, superseding the centred footer instruction. Existing artwork, typography, colours, sizes and other page behavior remain unchanged.

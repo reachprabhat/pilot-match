@@ -38,7 +38,7 @@ body { margin: 0; min-height: 100svh; display: flex; flex-direction: column; }
 .brand-lockup svg { width: 116px; height: 72px; flex: none; }
 .brand-wordmark { display: block; font-size: 40px; font-weight: 700; line-height: 40px; color: var(--accent); }
 .brand-lockup p { margin: 4px 0 0; font-size: 16px; line-height: 20px; color: var(--accent-light); }
-.brand-footer { display: flex; justify-content: center; padding-top: 16px; margin-bottom: 24px; border-top: 1px solid var(--line); line-height: 1.6; }
+.brand-footer { display: flex; justify-content: flex-start; padding-top: 16px; margin-bottom: 24px; border-top: 1px solid var(--line); line-height: 1.6; }
 main {
   flex: 1;
   width: 100%;
