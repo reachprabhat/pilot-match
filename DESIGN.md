@@ -127,3 +127,6 @@ Each search has at most its original top two scored operators, both subject to t
 
 
 Accepted founder/admin cards share payment labels: Free (first connect), Payment pending, or Paid, marked <saved date/time> IST. Display uses saved paidAt before free status, independent of grandfathered access. Founder cards place payment label after meeting status. QR, locks, reveal and operator layout remain unchanged.
+
+## Approved matching footer branding
+Footers reuse the header's exact inline handshake SVG, brand-lockup and brand-wordmark styles. Besto remains Inter 40px bold navy; Ask. Match. Meet. appears below Besto using the shared Inter 16px/20px lighter navy tagline rule. Centre the complete lockup within the existing footer. Header and all page content, buttons, flows and data remain unchanged.

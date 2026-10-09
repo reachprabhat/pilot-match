@@ -91,3 +91,6 @@ Visible and requestable best-fit results require score >=80, still at most two a
 
 ## Approved fixed original top two (dev only)
 Select the original top two before excluding requested history, rather than promoting lower ranks. Future completions retain an immutable original scoring snapshot; legacy searches derive the original pair from their saved pool. Saved results use the latest completed search only. Disable automatic replacements/refill jobs; approval updates cannot replace the original pair. Show the approved both-requested message and no best-fit cards after both requests. Real founder 2 proof complete at 390px with all application records unchanged. Next: owner reopens the existing dev link.
+
+## Approved footer branding, 9 October 2026
+Owner approved dev first, then production: replace plain footer text on founder/operator/admin/signup with the header's existing handshake and Besto styles, centred, with Ask. Match. Meet. using the shared tagline styles. No new logo or separate typography rules. Dev screenshot proof required at 390px for founder header/footer and desktop footer.
