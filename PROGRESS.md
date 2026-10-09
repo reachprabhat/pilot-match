@@ -525,3 +525,5 @@ Production footer release completed with npm run deploy, static revision 90270bb
 
 ## Left-aligned footer, 9 October 2026
 Owner approved dev first then production. Only footer justify-content changed from center to flex-start. Dev revision 10289824-abe7-4c4b-83b6-3918b653fb81 verified on real founder/operator/admin/signup at 390/1200/320: footer left edge equals header left edge, matching artwork/font/size/colours, no overflow or browser errors. Page HTML and header unchanged. Build-cache check passed. Private screenshots/checks in footer-left-proof. No form submissions or application data writes.
+
+Production left-aligned footer release completed with npm run deploy, static revision cddef1f5-3008-401a-80ed-3d2deddeb489. Real founder/operator/admin/signup browser checks passed at 390/1200/320: footer and header left edges match, same artwork/typography, no overflow or errors. Existing content/flows/data unchanged. Next: refresh an existing production link on a phone and scroll to the footer.
